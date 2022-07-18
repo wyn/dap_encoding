@@ -1,2 +1,4 @@
 (test
- (name dap_encoding))
+ (name dap_encoding)
+  (libraries data-encoding)
+)
