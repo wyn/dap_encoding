@@ -13,6 +13,35 @@ type response_t =
 
 type event_t =
   | Initialized
+  | Stopped
+  | Continued
+  | Exited
+  | Terminated
+  | Thread
+  | Output
+  | Breakpoint
+  | Module
+  | LoadedSource
+  | Process
+  | Capabilities
+  | ProgressStart
+  | ProgressUpdate
+  | ProgressEnd
+  | Invalidated
+  | Memory
+  | RunInTerminal
+
+type stopping_reason =
+  | Step
+  | Breakpoint
+  | Exception
+  | Pause
+  | Entry
+  | Goto
+  | Function_breakpoint
+  | Data_breakpoint
+  | Instruction_breakpoint
+
 
 module ProtocolMessage = struct
 
@@ -138,10 +167,78 @@ end
 
 module InitializedEvent = struct
 
-  type t = unit option Event.cls_t
+  type cls_t = unit option Event.cls_t
 
   class cls (seq:int64) = object
     inherit [unit option] Event.cls seq Initialized None
+  end
+
+end
+
+
+module StoppedEvent = struct
+
+
+  type body = {
+    reason: stopping_reason;
+    description: string option;
+    threadId: int64 option;
+    preserveFocusHint: bool option;
+    text: string option;
+    allThreadsStopped: bool option;
+    hitBreakpointIds: int64 list option;
+  }
+
+  type cls_t = body Event.cls_t
+
+  class cls (seq:int64) (body:body) = object
+    inherit [body] Event.cls seq Stopped body
+  end
+
+end
+
+
+module ContinuedEvent = struct
+
+  type body = {
+    threadId: int64;
+    allThreadsContinued: bool option;
+  }
+
+  type cls_t = body Event.cls_t
+
+  class cls (seq:int64) (body:body) = object
+    inherit [body] Event.cls seq Continued body
+  end
+
+end
+
+
+module ExitedEvent = struct
+
+  type body = {
+    exitCode: int64;
+  }
+
+  type cls_t = body Event.cls_t
+
+  class cls (seq:int64) (body:body) = object
+    inherit [body] Event.cls seq Exited body
+  end
+
+end
+
+
+module TerminatedEvent = struct
+
+  type 'args body = {
+    restart: 'args
+  }
+
+  type 'args cls_t = 'args body option Event.cls_t
+
+  class ['args] cls (seq:int64) (body:'args body option) = object
+    inherit ['args body option] Event.cls seq Terminated body
   end
 
 end
