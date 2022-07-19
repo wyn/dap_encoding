@@ -19,7 +19,7 @@ module Response = struct
     success:bool;
     command:string;
     message:t option;
-    body:'json option
+    body:'json
   >
 
   class ['json] cls
@@ -28,7 +28,7 @@ module Response = struct
       (success:bool)
       (command:string)
       (message:t option)
-      (body:'json option)
+      (body:'json)
       = object(_self)
     inherit ProtocolMessage.cls seq Response as _super
 
@@ -63,14 +63,19 @@ end
 
 module ErrorResponse = struct
 
-  type t = {
+  type body = {
     error: Message.t option
   }
 
-  type cls_t = t Response.cls_t
+  type cls_t = body Response.cls_t
 
-  class cls (seq:int64) (request_seq:int64) (success:bool) (command:string) (body:t option) = object
-    inherit [t] Response.cls seq request_seq success command None body
+  class cls
+      (seq:int64)
+      (request_seq:int64)
+      (success:bool)
+      (command:string)
+      (body:body) = object
+    inherit [body] Response.cls seq request_seq success command None body
   end
 
   let enc =
@@ -87,14 +92,18 @@ end
 
 module CancelResponse = struct
 
-  type t = unit
+  type body = unit option (* body is optional in Response *)
 
-  type cls_t = t Response.cls_t
+  type cls_t = body Response.cls_t
 
-  class cls (seq:int64) (request_seq:int64) (success:bool) (command:string) = object
-    inherit [t] Response.cls seq request_seq success command None None
+  class cls
+      (seq:int64)
+      (request_seq:int64)
+      (success:bool)
+      (command:string) = object
+    inherit [body] Response.cls seq request_seq success command None None
   end
 
-  let enc = Response.enc Data_encoding.unit
+  let enc = Response.enc Data_encoding.unit (* need encoder for what optional body carries *)
 
 end

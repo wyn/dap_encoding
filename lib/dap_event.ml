@@ -1,37 +1,37 @@
 open Dap_base
 
-type event_t =
-  | Initialized
-  | Stopped
-  | Continued
-  | Exited
-  | Terminated
-  | Thread
-  | Output
-  | Breakpoint
-  | Module
-  | LoadedSource
-  | Process
-  | Capabilities
-  | ProgressStart
-  | ProgressUpdate
-  | ProgressEnd
-  | Invalidated
-  | Memory
-  | RunInTerminal
-
 
 module Event = struct
 
+  type t =
+    | Initialized
+    | Stopped
+    | Continued
+    | Exited
+    | Terminated
+    | Thread
+    | Output
+    | Breakpoint
+    | Module
+    | LoadedSource
+    | Process
+    | Capabilities
+    | ProgressStart
+    | ProgressUpdate
+    | ProgressEnd
+    | Invalidated
+    | Memory
+    | RunInTerminal
+
   type 'json cls_t = <
     ProtocolMessage.cls_t;
-    event:event_t;
+    event:t;
     body:'json
   >
 
   class ['json] cls
       (seq:int64)
-      (event:event_t)
+      (event:t)
       (body:'json)
       = object
     inherit ProtocolMessage.cls seq Event

@@ -51,12 +51,12 @@ end
 
 module CancelRequest = struct
 
-  type t = CancelArguments.t
+  type args = CancelArguments.t
 
-  type cls_t = t Request.cls_t
+  type cls_t = args Request.cls_t
 
-  class cls (seq:int64) (arguments:t option) = object
-    inherit [t] Request.cls seq Cancel arguments
+  class cls (seq:int64) (arguments:args option) = object
+    inherit [args] Request.cls seq Cancel arguments
   end
 
   let enc = Request.enc CancelArguments.enc
