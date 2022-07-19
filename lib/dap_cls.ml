@@ -336,7 +336,23 @@ module OutputEvent = struct
 
 end
 
-module Breakpoint = struct type t = (* TODO *) int end
+module Breakpoint = struct
+
+  type 'data t = {
+    id: int64 option;
+    verified: bool;
+    message: string option;
+    source: 'data Source.t option;
+    line: int64 option;
+    column: int64 option;
+    endLine: int64 option;
+    endColumn: int64 option;
+    instructionReference: string option;
+    offset: int64 option;
+  }
+
+end
+
 
 module BreakpointEvent = struct
 
@@ -345,15 +361,15 @@ module BreakpointEvent = struct
     | New
     | Removed
 
-  type body = {
+  type 'data body = {
     reason: reason;
-    breakpoint: Breakpoint.t;
+    breakpoint: 'data Breakpoint.t;
   }
 
-  type cls_t = body Event.cls_t
+  type 'data cls_t = 'data body Event.cls_t
 
-  class cls (seq:int64) (body:body) = object
-    inherit [body] Event.cls seq Breakpoint body
+  class ['data] cls (seq:int64) (body:'data body) = object
+    inherit ['data body] Event.cls seq Breakpoint body
   end
 
 end
