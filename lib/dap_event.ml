@@ -23,16 +23,16 @@ type event_t =
 
 module Event = struct
 
-  type 'body cls_t = <
+  type 'json cls_t = <
     ProtocolMessage.cls_t;
     event:event_t;
-    body:'body
+    body:'json
   >
 
-  class ['body] cls
+  class ['json] cls
       (seq:int64)
       (event:event_t)
-      (body:'body)
+      (body:'json)
       = object
     inherit ProtocolMessage.cls seq Event
 
@@ -121,14 +121,14 @@ end
 
 module TerminatedEvent = struct
 
-  type 'args body = {
-    restart: 'args
+  type 'json body = {
+    restart: 'json
   }
 
-  type 'args cls_t = 'args body option Event.cls_t
+  type 'json cls_t = 'json body option Event.cls_t
 
-  class ['args] cls (seq:int64) (body:'args body option) = object
-    inherit ['args body option] Event.cls seq Terminated body
+  class ['json] cls (seq:int64) (body:'json body option) = object
+    inherit ['json body option] Event.cls seq Terminated body
   end
 
 end
@@ -168,23 +168,23 @@ module OutputEvent = struct
     | StartCollapsed
     | End
 
-  type ('data, 'source_data) body = {
+  type 'json body = {
     output: string;
     category: output_category option;
     group: group_t option;
     variablesReference: int64 option;
-    source: 'source_data Source.t option;
+    source: 'json Source.t option;
     line: int64 option;
     column: int64 option;
-    data: 'data option;
+    data: 'json option;
   }
 
-  type ('data, 'source_data) cls_t = ('data, 'source_data) body Event.cls_t
+  type 'json cls_t = 'json body Event.cls_t
 
-  class ['data, 'source_data] cls
+  class ['json] cls
       (seq:int64)
-      (body:('data, 'source_data) body) = object
-    inherit [('data, 'source_data) body] Event.cls seq Output body
+      (body:'json body) = object
+    inherit ['json body] Event.cls seq Output body
   end
 
 end
@@ -197,15 +197,15 @@ module BreakpointEvent = struct
     | New
     | Removed
 
-  type 'data body = {
+  type 'json body = {
     reason: reason;
-    breakpoint: 'data Breakpoint.t;
+    breakpoint: 'json Breakpoint.t;
   }
 
-  type 'data cls_t = 'data body Event.cls_t
+  type 'json cls_t = 'json body Event.cls_t
 
-  class ['data] cls (seq:int64) (body:'data body) = object
-    inherit ['data body] Event.cls seq Breakpoint body
+  class ['json] cls (seq:int64) (body:'json body) = object
+    inherit ['json body] Event.cls seq Breakpoint body
   end
 
 end
@@ -239,15 +239,15 @@ module LoadedSourceEvent = struct
     | Changed
     | Removed
 
-  type 'data body = {
+  type 'json body = {
     reason: reason;
-    source: 'data Source.t;
+    source: 'json Source.t;
   }
 
-  type 'data cls_t = 'data body Event.cls_t
+  type 'json cls_t = 'json body Event.cls_t
 
-  class ['data] cls (seq:int64) (body:'data body) = object
-    inherit ['data body] Event.cls seq LoadedSource body
+  class ['json] cls (seq:int64) (body:'json body) = object
+    inherit ['json body] Event.cls seq LoadedSource body
   end
 
 end
