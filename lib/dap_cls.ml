@@ -31,17 +31,6 @@ type event_t =
   | Memory
   | RunInTerminal
 
-type stopping_reason =
-  | Step
-  | Breakpoint
-  | Exception
-  | Pause
-  | Entry
-  | Goto
-  | Function_breakpoint
-  | Data_breakpoint
-  | Instruction_breakpoint
-
 
 module ProtocolMessage = struct
 
@@ -56,9 +45,17 @@ end
 
 module Request = struct
 
-  type 'args cls_t = < ProtocolMessage.cls_t; command:request_t; arguments:'args option >
+  type 'args cls_t = <
+    ProtocolMessage.cls_t;
+    command:request_t;
+    arguments:'args option
+  >
 
-  class ['args] cls (seq:int64) (command:request_t) (arguments:'args option) = object
+  class ['args] cls
+      (seq:int64)
+      (command:request_t)
+      (arguments:'args option)
+      = object
     inherit ProtocolMessage.cls seq Request
 
     method command = command
@@ -70,9 +67,17 @@ end
 
 module Event = struct
 
-  type 'body cls_t = < ProtocolMessage.cls_t; event:event_t; body:'body >
+  type 'body cls_t = <
+    ProtocolMessage.cls_t;
+    event:event_t;
+    body:'body
+  >
 
-  class ['body] cls (seq:int64) (event:event_t) (body:'body) = object
+  class ['body] cls
+      (seq:int64)
+      (event:event_t)
+      (body:'body)
+      = object
     inherit ProtocolMessage.cls seq Event
 
     method event = event
@@ -84,9 +89,23 @@ end
 
 module Response = struct
 
-  type 'body cls_t = < ProtocolMessage.cls_t; request_seq:int64; success:bool; command:string; message:response_t option; body:'body >
+  type 'body cls_t = <
+    ProtocolMessage.cls_t;
+    request_seq:int64;
+    success:bool;
+    command:string;
+    message:response_t option;
+    body:'body
+  >
 
-  class ['body] cls (seq:int64) (request_seq:int64) (success:bool) (command:string) (message:response_t option) (body:'body) = object
+  class ['body] cls
+      (seq:int64)
+      (request_seq:int64)
+      (success:bool)
+      (command:string)
+      (message:response_t option)
+      (body:'body)
+      = object
     inherit ProtocolMessage.cls seq Response
 
     method request_seq = request_seq
@@ -177,6 +196,17 @@ end
 
 
 module StoppedEvent = struct
+
+  type stopping_reason =
+    | Step
+    | Breakpoint
+    | Exception
+    | Pause
+    | Entry
+    | Goto
+    | Function_breakpoint
+    | Data_breakpoint
+    | Instruction_breakpoint
 
 
   type body = {
