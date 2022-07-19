@@ -263,7 +263,41 @@ module ThreadEvent = struct
 
 end
 
-module Source = struct type t = (* TODO *) int end
+module Checksum = struct
+
+  type checksum_algorithm =
+    | MD5
+    | SHA1
+    | SHA256
+    | Timestamp
+
+  type t = {
+    algorithm: checksum_algorithm;
+    checksum: string;
+  }
+
+end
+
+
+module Source = struct
+
+  type hint =
+    | Normal
+    | Emphasize
+    | Deemphasize
+
+  type 'data t = {
+    name: string option;
+    path: string option;
+    sourceReference: int64 option;
+    presentationHint: hint option;
+    origin: string option;
+    sources: 'data t list option;
+    adapterData: 'data option;
+    checksums: Checksum.t list option;
+  }
+
+end
 
 
 module OutputEvent = struct
