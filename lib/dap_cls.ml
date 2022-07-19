@@ -315,21 +315,23 @@ module OutputEvent = struct
     | End
 
 
-  type 'data body = {
+  type ('data, 'source_data) body = {
     output: string;
     category: output_category option;
     group: group_t option;
     variablesReference: int64 option;
-    source: Source.t option;
+    source: 'source_data Source.t option;
     line: int64 option;
     column: int64 option;
     data: 'data option;
   }
 
-  type 'data cls_t = 'data body Event.cls_t
+  type ('data, 'source_data) cls_t = ('data, 'source_data) body Event.cls_t
 
-  class ['data] cls (seq:int64) (body:'data body) = object
-    inherit ['data body] Event.cls seq Output body
+  class ['data, 'source_data] cls
+      (seq:int64)
+      (body:('data, 'source_data) body) = object
+    inherit [('data, 'source_data) body] Event.cls seq Output body
   end
 
 end
@@ -385,15 +387,15 @@ module LoadedSourceEvent = struct
     | Changed
     | Removed
 
-  type body = {
+  type 'data body = {
     reason: reason;
-    source: Source.t;
+    source: 'data Source.t;
   }
 
-  type cls_t = body Event.cls_t
+  type 'data cls_t = 'data body Event.cls_t
 
-  class cls (seq:int64) (body:body) = object
-    inherit [body] Event.cls seq LoadedSource body
+  class ['data] cls (seq:int64) (body:'data body) = object
+    inherit ['data body] Event.cls seq LoadedSource body
   end
 
 end
