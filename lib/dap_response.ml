@@ -6,22 +6,22 @@ type response_t =
 
 module Response = struct
 
-  type 'body cls_t = <
+  type 'json cls_t = <
     ProtocolMessage.cls_t;
     request_seq:int64;
     success:bool;
     command:string;
     message:response_t option;
-    body:'body
+    body:'json
   >
 
-  class ['body] cls
+  class ['json] cls
       (seq:int64)
       (request_seq:int64)
       (success:bool)
       (command:string)
       (message:response_t option)
-      (body:'body)
+      (body:'json)
       = object
     inherit ProtocolMessage.cls seq Response
 

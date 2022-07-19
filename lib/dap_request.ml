@@ -6,16 +6,16 @@ type request_t =
 
 module Request = struct
 
-  type 'args cls_t = <
+  type 'json cls_t = <
     ProtocolMessage.cls_t;
     command:request_t;
-    arguments:'args option
+    arguments:'json option
   >
 
-  class ['args] cls
+  class ['json] cls
       (seq:int64)
       (command:request_t)
-      (arguments:'args option)
+      (arguments:'json option)
       = object
     inherit ProtocolMessage.cls seq Request
 
@@ -41,6 +41,6 @@ end
 
 
 
-class ['args] requester_cls (req:'args Request.cls_t) = object
+class ['json] requester_cls (req:'json Request.cls_t) = object
   method req = req
 end
