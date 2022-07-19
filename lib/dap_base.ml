@@ -1,19 +1,35 @@
-type msg_t =
-  | Request
-  | Response
-  | Event
-
 module ProtocolMessage = struct
 
-  type cls_t = < seq:int64; type_:msg_t >
+  type t =
+    | Request
+    | Response
+    | Event
 
-  class cls (seq:int64) (type_:msg_t) = object
+  let enc_t =
+    let open Data_encoding in
+    conv
+      (function | Request -> "request" | Response -> "response" | Event -> "event")
+      (function | "request" -> Request | "response" -> Response | "event" -> Event | _ -> failwith "Unknown message type")
+      string
+
+  type cls_t = < seq:int64; type_:t >
+
+  class cls (seq:int64) (type_:t) = object
     method seq = seq
     method type_ = type_
   end
 
 end
 
+module type ENC_0 = sig
+  type t
+  val enc : t Data_encoding.t
+end
+
+module type ENC_1 = sig
+  type 'a t
+  val enc : 'a Data_encoding.t -> 'a t Data_encoding.t
+end
 
 module CancelArguments = struct
 
@@ -22,10 +38,61 @@ module CancelArguments = struct
     progressId:string option
   }
 
+  let enc =
+    let open Data_encoding in
+    conv
+      (fun {requestId; progressId} -> (requestId, progressId))
+      (fun (requestId, progressId) -> {requestId; progressId})
+      (obj2
+         (opt "requestId" int64)
+         (opt "progressId" string))
+
 end
 
 
 module Message = struct
+
+    (* TODO not sure whats going on with the variables field
+       "Message": {
+     *   "type": "object",
+     *   "description": "A structured message object. Used to return errors from requests.",
+     *   "properties": {
+     *     "id": {
+     *       "type": "integer",
+     *       "description": "Unique identifier for the message."
+     *     },
+     *     "format": {
+     *       "type": "string",
+     *       "description": "A format string for the message. Embedded variables have the form '{name}'.\nIf variable name starts with an underscore character, the variable does not contain user data (PII) and can be safely used for telemetry purposes."
+     *     },
+     *     "variables": {
+     *       "type": "object",
+     *       "description": "An object used as a dictionary for looking up the variables in the format string.",
+     *       "additionalProperties": {
+     *         "type": "string",
+     *         "description": "Values must be strings."
+     *       }
+     *     },
+     *     "sendTelemetry": {
+     *       "type": "boolean",
+     *       "description": "If true send to telemetry."
+     *     },
+     *     "showUser": {
+     *       "type": "boolean",
+     *       "description": "If true show user."
+     *     },
+     *     "url": {
+     *       "type": "string",
+     *       "description": "An optional url where additional information about this message can be found."
+     *     },
+     *     "urlLabel": {
+     *       "type": "string",
+     *       "description": "An optional label that is presented to the user as the UI for opening the url."
+     *     }
+     *   },
+     *   "required": ["id", "format"]
+     * }, *)
+
 
   type t = {
     id: int64;
@@ -36,6 +103,20 @@ module Message = struct
     url: string option;
     urlLabel: string option;
   }
+
+  let enc =
+    let open Data_encoding in
+    conv
+      (fun {id; format; variables; sendTelemetry; showUser; url; urlLabel} -> (id, format, variables, sendTelemetry, showUser, url, urlLabel))
+      (fun (id, format, variables, sendTelemetry, showUser, url, urlLabel) -> {id; format; variables; sendTelemetry; showUser; url; urlLabel})
+      (obj7
+         (req "id" int64)
+         (req "format" string)
+         (opt "variables" (list @@ tup2 string string))
+         (opt "sendTelemetry" bool)
+         (opt "showUser" bool)
+         (opt "url" string)
+         (opt "urlLabel" string))
 
 end
 
@@ -48,6 +129,13 @@ module ChecksumAlgorithm = struct
     | SHA256
     | Timestamp
 
+  let enc =
+    let open Data_encoding in
+    conv
+      (function | MD5 -> "MD5" | SHA1 -> "SHA1" | SHA256 -> "SHA256" | Timestamp -> "timestamp")
+      (function | "MD5" -> MD5 | "SHA1" -> SHA1 | "SHA256" -> SHA256 | "timestamp" -> Timestamp | _ -> failwith "Unknown Checksum")
+      string
+
 end
 
 module Checksum = struct
@@ -56,6 +144,15 @@ module Checksum = struct
     algorithm: ChecksumAlgorithm.t;
     checksum: string;
   }
+
+  let enc =
+    let open Data_encoding in
+    conv
+      (fun {algorithm; checksum} -> (algorithm, checksum))
+      (fun (algorithm, checksum) -> {algorithm; checksum})
+      (obj2
+         (req "algorithm" ChecksumAlgorithm.enc)
+         (req "checksum" string))
 
 end
 
@@ -67,27 +164,87 @@ module Source = struct
     | Emphasize
     | Deemphasize
 
-  type 'data t = {
+  let hint_enc =
+    let open Data_encoding in
+    conv
+      (function | Normal -> "normal" | Emphasize -> "emphasize" | Deemphasize -> "deemphasize")
+      (function | "normal" -> Normal | "emphasize" -> Emphasize | "deemphasize" -> Deemphasize | _ -> failwith "Unknown hint")
+      string
+
+  type 'json t = {
     name: string option;
     path: string option;
     sourceReference: int64 option;
     presentationHint: hint option;
     origin: string option;
-    sources: 'data t list option;
-    adapterData: 'data option;
+    sources: 'json t list option;
+    adapterData: 'json option;
     checksums: Checksum.t list option;
   }
 
+  let enc json_enc =
+    let open Data_encoding in
+    mu "t" (fun e ->
+        conv
+          (fun {
+             name;
+             path;
+             sourceReference;
+             presentationHint;
+             origin;
+             sources;
+             adapterData;
+             checksums;
+           } -> (
+               name,
+               path,
+               sourceReference,
+               presentationHint,
+               origin,
+               sources,
+               adapterData,
+               checksums
+             ))
+          (fun (
+             name,
+             path,
+             sourceReference,
+             presentationHint,
+             origin,
+             sources,
+             adapterData,
+             checksums
+           ) -> {
+               name;
+               path;
+               sourceReference;
+               presentationHint;
+               origin;
+               sources;
+               adapterData;
+               checksums;
+             })
+          (obj8
+             (opt "name" string)
+             (opt "path" string)
+             (opt "sourceReference" int64)
+             (opt "presentationHint" hint_enc)
+             (opt "origin" string)
+             (opt "sources" (list e))
+             (opt "adapterData" json_enc)
+             (opt "checksums" (list Checksum.enc))
+          )
+      )
 end
 
 
 module Breakpoint = struct
 
-  type 'data t = {
+  type 'json t = {
     id: int64 option;
     verified: bool;
     message: string option;
-    source: 'data Source.t option;
+    source: 'json Source.t option;
     line: int64 option;
     column: int64 option;
     endLine: int64 option;
