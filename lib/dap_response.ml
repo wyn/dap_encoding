@@ -43,7 +43,7 @@ module Response = struct
   let enc js =
     let open Data_encoding in
     conv
-      (fun (r:'json cls_t) ->
+      (fun (r : < 'json cls_t >) ->
          (r#seq, r#type_, r#request_seq, r#success, r#command, r#message, r#body) )
 
       (fun (seq, _, request_seq, success, command, message, body) ->
@@ -63,26 +63,38 @@ end
 
 module ErrorResponse = struct
 
-  type body = {
+  type t = {
     error: Message.t option
   }
 
-  type cls_t = body Response.cls_t
+  type cls_t = t Response.cls_t
 
-  class cls (seq:int64) (request_seq:int64) (success:bool) (command:string) (body:body option) = object
-    inherit [body] Response.cls seq request_seq success command None body
+  class cls (seq:int64) (request_seq:int64) (success:bool) (command:string) (body:t option) = object
+    inherit [t] Response.cls seq request_seq success command None body
   end
 
+  let enc =
+    let open Data_encoding in
+    Response.enc @@
+    conv
+      (fun {error} -> error)
+      (fun error -> {error})
+      (obj1
+         (opt "error" Message.enc))
 
 end
 
 
 module CancelResponse = struct
 
-  type cls_t = unit Response.cls_t
+  type t = unit
+
+  type cls_t = t Response.cls_t
 
   class cls (seq:int64) (request_seq:int64) (success:bool) (command:string) = object
-    inherit [unit] Response.cls seq request_seq success command None None
+    inherit [t] Response.cls seq request_seq success command None None
   end
+
+  let enc = Response.enc Data_encoding.unit
 
 end
