@@ -12,11 +12,11 @@ type response_t =
   | Cancelled
 
 type event_t =
-  | Something
+  | Initialized
 
 module ProtocolMessage = struct
 
-  type t = < seq:int64; type_:msg_t >
+  type cls_t = < seq:int64; type_:msg_t >
 
   class cls (seq:int64) (type_:msg_t) = object
     method seq = seq
@@ -27,7 +27,7 @@ end
 
 module Request = struct
 
-  type 'args t = < ProtocolMessage.t; command:request_t; arguments:'args option >
+  type 'args cls_t = < ProtocolMessage.cls_t; command:request_t; arguments:'args option >
 
   class ['args] cls (seq:int64) (command:request_t) (arguments:'args option) = object
     inherit ProtocolMessage.cls seq Request
@@ -41,7 +41,7 @@ end
 
 module Event = struct
 
-  type 'body t = < ProtocolMessage.t; event:event_t; body:'body >
+  type 'body cls_t = < ProtocolMessage.cls_t; event:event_t; body:'body >
 
   class ['body] cls (seq:int64) (event:event_t) (body:'body) = object
     inherit ProtocolMessage.cls seq Event
@@ -55,7 +55,7 @@ end
 
 module Response = struct
 
-  type 'body t = < ProtocolMessage.t; request_seq:int64; success:bool; command:string; message:response_t option; body:'body >
+  type 'body cls_t = < ProtocolMessage.cls_t; request_seq:int64; success:bool; command:string; message:response_t option; body:'body >
 
   class ['body] cls (seq:int64) (request_seq:int64) (success:bool) (command:string) (message:response_t option) (body:'body) = object
     inherit ProtocolMessage.cls seq Response
@@ -91,7 +91,7 @@ module ErrorResponse = struct
     error: Message.t option
   }
 
-  type t = body Response.t
+  type cls_t = body Response.cls_t
 
   class cls (seq:int64) (request_seq:int64) (success:bool) (command:string) (body:body) = object
     inherit [body] Response.cls seq request_seq success command None body
@@ -100,17 +100,21 @@ module ErrorResponse = struct
 
 end
 
-module CancelRequest = struct
+module CancelArguments = struct
 
-  type args = {
+  type t = {
     requestId:int64 option;
     progressId:string option
   }
 
-  type t = args Request.t
+end
 
-  class cls (seq:int64) (arguments:args option) = object
-    inherit [args] Request.cls seq Cancel arguments
+module CancelRequest = struct
+
+  type cls_t = CancelArguments.t Request.cls_t
+
+  class cls (seq:int64) (arguments:CancelArguments.t  option) = object
+    inherit [CancelArguments.t] Request.cls seq Cancel arguments
 
   end
 
@@ -118,7 +122,7 @@ end
 
 module CancelResponse = struct
 
-  type t = unit option Response.t
+  type cls_t = unit option Response.cls_t
 
   class cls (seq:int64) (request_seq:int64) (success:bool) (command:string) = object
     inherit [unit option] Response.cls seq request_seq success command None None
@@ -127,6 +131,17 @@ module CancelResponse = struct
 end
 
 
-class ['args] requester_cls (req:'args Request.t) = object
+class ['args] requester_cls (req:'args Request.cls_t) = object
   method req = req
+end
+
+
+module InitializedEvent = struct
+
+  type t = unit option Event.cls_t
+
+  class cls (seq:int64) = object
+    inherit [unit option] Event.cls seq Initialized None
+  end
+
 end
