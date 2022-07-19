@@ -242,3 +242,258 @@ module TerminatedEvent = struct
   end
 
 end
+
+
+module ThreadEvent = struct
+
+  type thread_reason =
+    | Started
+    | Exited
+
+  type body = {
+    reason: thread_reason;
+    threadId: int64;
+  }
+
+  type cls_t = body Event.cls_t
+
+  class cls (seq:int64) (body:body) = object
+    inherit [body] Event.cls seq Thread body
+  end
+
+end
+
+module Source = struct type t = (* TODO *) int end
+
+
+module OutputEvent = struct
+
+  type output_category =
+    | Console
+    | Important
+    | Stdout
+    | Stderr
+    | Telemetry
+
+  type group_t =
+    | Start
+    | StartCollapsed
+    | End
+
+
+  type 'data body = {
+    output: string;
+    category: output_category option;
+    group: group_t option;
+    variablesReference: int64 option;
+    source: Source.t option;
+    line: int64 option;
+    column: int64 option;
+    data: 'data option;
+  }
+
+  type 'data cls_t = 'data body Event.cls_t
+
+  class ['data] cls (seq:int64) (body:'data body) = object
+    inherit ['data body] Event.cls seq Output body
+  end
+
+end
+
+module Breakpoint = struct type t = (* TODO *) int end
+
+module BreakpointEvent = struct
+
+  type reason =
+    | Changed
+    | New
+    | Removed
+
+  type body = {
+    reason: reason;
+    breakpoint: Breakpoint.t;
+  }
+
+  type cls_t = body Event.cls_t
+
+  class cls (seq:int64) (body:body) = object
+    inherit [body] Event.cls seq Breakpoint body
+  end
+
+end
+
+module Module_ = struct type t = (* TODO *) int end
+module ModuleEvent = struct
+
+  type reason =
+    | New
+    | Changed
+    | Removed
+
+  type body = {
+    reason: reason;
+    module_: Module_.t
+  }
+
+  type cls_t = body Event.cls_t
+
+  class cls (seq:int64) (body:body) = object
+    inherit [body] Event.cls seq Module body
+  end
+
+end
+
+
+module LoadedSourceEvent = struct
+
+  type reason =
+    | New
+    | Changed
+    | Removed
+
+  type body = {
+    reason: reason;
+    source: Source.t;
+  }
+
+  type cls_t = body Event.cls_t
+
+  class cls (seq:int64) (body:body) = object
+    inherit [body] Event.cls seq LoadedSource body
+  end
+
+end
+
+
+module ProcessEvent = struct
+
+  type start_method =
+    | Launch
+    | Attach
+    | AttachForSuspendedLaunch
+
+  type body = {
+    name: string;
+    systemProcessId: int64 option;
+    isLocalProcess: bool option;
+    startMethod: start_method option;
+    pointerSize: int64 option;
+  }
+
+  type cls_t = body Event.cls_t
+
+  class cls (seq:int64) (body:body) = object
+    inherit [body] Event.cls seq Process body
+  end
+
+end
+
+module Capabilities = struct type t = (* TODO *) int end
+module CapabilitiesEvent = struct
+
+  type body = {
+    capabilities: Capabilities.t
+  }
+
+  type cls_t = body Event.cls_t
+
+  class cls (seq:int64) (body:body) = object
+    inherit [body] Event.cls seq Capabilities body
+  end
+
+end
+
+
+module ProgressStartEvent = struct
+
+  type body = {
+    progressId: string;
+    title: string;
+    requestId: int64 option;
+    cancellable: bool option;
+    message: string option;
+    percentage: int64 option;
+  }
+
+  type cls_t = body Event.cls_t
+
+  class cls (seq:int64) (body:body) = object
+    inherit [body] Event.cls seq ProgressStart body
+  end
+
+end
+
+
+module ProgressUpdateEvent = struct
+
+  type body = {
+    progressId: string;
+    message: string option;
+    percentage: int64 option;
+  }
+
+  type cls_t = body Event.cls_t
+
+  class cls (seq:int64) (body:body) = object
+    inherit [body] Event.cls seq ProgressUpdate body
+  end
+
+end
+
+
+module ProgressEndEvent = struct
+
+  type body = {
+    progressId: string;
+    message: string option;
+  }
+
+  type cls_t = body Event.cls_t
+
+  class cls (seq:int64) (body:body) = object
+    inherit [body] Event.cls seq ProgressEnd body
+  end
+
+end
+
+module InvalidatedAreas = struct
+  type t =
+    | All
+    | Stacks
+    | Threads
+    | Variables
+end
+
+module InvalidatedEvent = struct
+
+  type body = {
+    areas: InvalidatedAreas.t list option;
+    threadId: int64 option;
+    stackFrameId: int64 option;
+
+  }
+
+  type cls_t = body Event.cls_t
+
+  class cls (seq:int64) (body:body) = object
+    inherit [body] Event.cls seq Invalidated body
+  end
+
+end
+
+
+module MemoryEvent = struct
+
+  type body = {
+    memoryReference: string;
+    offset: int64;
+    count: int64;
+  }
+
+  type cls_t = body Event.cls_t
+
+  class cls (seq:int64) (body:body) = object
+    inherit [body] Event.cls seq Memory body
+  end
+
+end
