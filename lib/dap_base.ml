@@ -290,6 +290,48 @@ module ExceptionBreakpointsFilter = struct
     conditionDescription: string option;
   }
 
+  let enc =
+    let open Data_encoding in
+    conv
+      (fun {
+         filter;
+         label;
+         description;
+         default;
+         supportsCondition;
+         conditionDescription;
+       } -> (
+           filter,
+           label,
+           description,
+           default,
+           supportsCondition,
+           conditionDescription
+         ))
+      (fun (
+         filter,
+         label,
+         description,
+         default,
+         supportsCondition,
+         conditionDescription
+       ) -> {
+           filter;
+           label;
+           description;
+           default;
+           supportsCondition;
+           conditionDescription;
+         })
+      (obj6
+         (req "filter" string)
+         (req "label" string)
+         (opt "description" string)
+         (opt "default" bool)
+         (opt "supportsCondition" bool)
+         (opt "conditionDescription" string)
+      )
+
 end
 
 module ColumnDescriptor = struct
@@ -300,6 +342,24 @@ module ColumnDescriptor = struct
     | Boolean
     | UnixTimestampUTC
 
+  let column_type_enc =
+    let open Data_encoding in
+    conv
+      (function
+        | String -> "string"
+        | Number -> "number"
+        | Boolean -> "boolean"
+        | UnixTimestampUTC -> "unixTimestampUTC"
+      )
+      (function
+        | "string" -> String
+        | "number" -> Number
+        | "boolean" -> Boolean
+        | "unixTimestampUTC" -> UnixTimestampUTC
+        | _ -> failwith "Unknown column type"
+      )
+      string
+
   type t = {
     attributeName: string;
     label: string;
@@ -308,6 +368,42 @@ module ColumnDescriptor = struct
     width: int64 option
   }
 
+  let enc =
+    let open Data_encoding in
+    conv
+      (fun {
+         attributeName;
+         label;
+         format;
+         type_;
+         width;
+       } -> (
+           attributeName,
+           label,
+           format,
+           type_,
+           width
+         ))
+      (fun (
+           attributeName,
+           label,
+           format,
+           type_,
+           width
+         ) -> {
+         attributeName;
+         label;
+         format;
+         type_;
+         width;
+       })
+      (obj5
+         (req "attributeName" string)
+         (req "label" string)
+         (opt "format" string)
+         (opt "type" column_type_enc)
+         (opt "width" int64)
+      )
 end
 
 
@@ -366,59 +462,21 @@ module Capabilities = struct
     supportsSingleThreadExecutionRequests: bool option;
   }
 
-  type t = (t0*t1*t2*t3)
-
-  let enc =
+  let enc_t0 =
     let open Data_encoding in
     conv
-      (fun (
-         {
-           supportsConfigurationDoneRequest;
-           supportsFunctionBreakpoints;
-           supportsConditionalBreakpoints;
-           supportsHitConditionalBreakpoints;
-           supportsEvaluateForHovers;
-           exceptionBreakpointFilters;
-           supportsStepBack;
-           supportsSetVariable;
-           supportsRestartFrame;
-           supportsGotoTargetsRequest;
-         },
-         {
-           supportsStepInTargetsRequest;
-           supportsCompletionsRequest;
-           completionTriggerCharacters;
-           supportsModulesRequest;
-           additionalModuleColumns;
-           supportedChecksumAlgorithms;
-           supportsRestartRequest;
-           supportsExceptionOptions;
-           supportsValueFormattingOptions;
-           supportsExceptionInfoRequest;
-         },
-         {
-           supportTerminateDebuggee;
-           supportSuspendDebuggee;
-           supportsDelayedStackTraceLoading;
-           supportsLoadedSourcesRequest;
-           supportsLogPoints;
-           supportsTerminateThreadsRequest;
-           supportsSetExpression;
-           supportsTerminateRequest;
-           supportsDataBreakpoints;
-           supportsReadMemoryRequest;
-         },
-         {
-           supportsWriteMemoryRequest;
-           supportsDisassembleRequest;
-           supportsCancelRequest;
-           supportsBreakpointLocationsRequest;
-           supportsClipboardContext;
-           supportsSteppingGranularity;
-           supportsInstructionBreakpoints;
-           supportsExceptionFilterOptions;
-           supportsSingleThreadExecutionRequests;
-         }) -> (
+      (fun {
+         supportsConfigurationDoneRequest;
+         supportsFunctionBreakpoints;
+         supportsConditionalBreakpoints;
+         supportsHitConditionalBreakpoints;
+         supportsEvaluateForHovers;
+         exceptionBreakpointFilters;
+         supportsStepBack;
+         supportsSetVariable;
+         supportsRestartFrame;
+         supportsGotoTargetsRequest;
+       } -> (
            supportsConfigurationDoneRequest,
            supportsFunctionBreakpoints,
            supportsConditionalBreakpoints,
@@ -428,37 +486,9 @@ module Capabilities = struct
            supportsStepBack,
            supportsSetVariable,
            supportsRestartFrame,
-           supportsGotoTargetsRequest,
-           supportsStepInTargetsRequest,
-           supportsCompletionsRequest,
-           completionTriggerCharacters,
-           supportsModulesRequest,
-           additionalModuleColumns,
-           supportedChecksumAlgorithms,
-           supportsRestartRequest,
-           supportsExceptionOptions,
-           supportsValueFormattingOptions,
-           supportsExceptionInfoRequest,
-           supportTerminateDebuggee,
-           supportSuspendDebuggee,
-           supportsDelayedStackTraceLoading,
-           supportsLoadedSourcesRequest,
-           supportsLogPoints,
-           supportsTerminateThreadsRequest,
-           supportsSetExpression,
-           supportsTerminateRequest,
-           supportsDataBreakpoints,
-           supportsReadMemoryRequest,
-           supportsWriteMemoryRequest,
-           supportsDisassembleRequest,
-           supportsCancelRequest,
-           supportsBreakpointLocationsRequest,
-           supportsClipboardContext,
-           supportsSteppingGranularity,
-           supportsInstructionBreakpoints,
-           supportsExceptionFilterOptions,
-           supportsSingleThreadExecutionRequests
-         ))
+           supportsGotoTargetsRequest
+         )
+      )
       (fun (
          supportsConfigurationDoneRequest,
          supportsFunctionBreakpoints,
@@ -469,7 +499,61 @@ module Capabilities = struct
          supportsStepBack,
          supportsSetVariable,
          supportsRestartFrame,
-         supportsGotoTargetsRequest,
+         supportsGotoTargetsRequest
+       ) -> {
+           supportsConfigurationDoneRequest;
+           supportsFunctionBreakpoints;
+           supportsConditionalBreakpoints;
+           supportsHitConditionalBreakpoints;
+           supportsEvaluateForHovers;
+           exceptionBreakpointFilters;
+           supportsStepBack;
+           supportsSetVariable;
+           supportsRestartFrame;
+           supportsGotoTargetsRequest;
+         }
+      )
+      (obj10
+         (opt "supportsConfigurationDoneRequest" bool)
+         (opt "supportsFunctionBreakpoints" bool)
+         (opt "supportsConditionalBreakpoints" bool)
+         (opt "supportsHitConditionalBreakpoints" bool)
+         (opt "supportsEvaluateForHovers" bool)
+         (opt "exceptionBreakpointFilters" @@ list ExceptionBreakpointsFilter.enc)
+         (opt "supportsStepBack" bool)
+         (opt "supportsSetVariable" bool)
+         (opt "supportsRestartFrame" bool)
+         (opt "supportsGotoTargetsRequest" bool)
+      )
+
+  let enc_t1 =
+    let open Data_encoding in
+    conv
+      (fun {
+         supportsStepInTargetsRequest;
+         supportsCompletionsRequest;
+         completionTriggerCharacters;
+         supportsModulesRequest;
+         additionalModuleColumns;
+         supportedChecksumAlgorithms;
+         supportsRestartRequest;
+         supportsExceptionOptions;
+         supportsValueFormattingOptions;
+         supportsExceptionInfoRequest;
+       } -> (
+           supportsStepInTargetsRequest,
+           supportsCompletionsRequest,
+           completionTriggerCharacters,
+           supportsModulesRequest,
+           additionalModuleColumns,
+           supportedChecksumAlgorithms,
+           supportsRestartRequest,
+           supportsExceptionOptions,
+           supportsValueFormattingOptions,
+           supportsExceptionInfoRequest
+         )
+      )
+      (fun (
          supportsStepInTargetsRequest,
          supportsCompletionsRequest,
          completionTriggerCharacters,
@@ -479,7 +563,61 @@ module Capabilities = struct
          supportsRestartRequest,
          supportsExceptionOptions,
          supportsValueFormattingOptions,
-         supportsExceptionInfoRequest,
+         supportsExceptionInfoRequest
+       ) -> {
+           supportsStepInTargetsRequest;
+           supportsCompletionsRequest;
+           completionTriggerCharacters;
+           supportsModulesRequest;
+           additionalModuleColumns;
+           supportedChecksumAlgorithms;
+           supportsRestartRequest;
+           supportsExceptionOptions;
+           supportsValueFormattingOptions;
+           supportsExceptionInfoRequest;
+         }
+      )
+      (obj10
+         (opt "supportsStepInTargetsRequest" bool)
+         (opt "supportsCompletionsRequest" bool)
+         (opt "completionTriggerCharacters" @@ list string)
+         (opt "supportsModulesRequest" bool)
+         (opt "additionalModuleColumns" ColumnDescriptor.enc)
+         (opt "supportedChecksumAlgorithms" @@ list ChecksumAlgorithm.enc)
+         (opt "supportsRestartRequest" bool)
+         (opt "supportsExceptionOptions" bool)
+         (opt "supportsValueFormattingOptions" bool)
+         (opt "supportsExceptionInfoRequest" bool)
+      )
+
+  let enc_t2 =
+    let open Data_encoding in
+    conv
+      (fun {
+         supportTerminateDebuggee;
+         supportSuspendDebuggee;
+         supportsDelayedStackTraceLoading;
+         supportsLoadedSourcesRequest;
+         supportsLogPoints;
+         supportsTerminateThreadsRequest;
+         supportsSetExpression;
+         supportsTerminateRequest;
+         supportsDataBreakpoints;
+         supportsReadMemoryRequest;
+       } -> (
+           supportTerminateDebuggee,
+           supportSuspendDebuggee,
+           supportsDelayedStackTraceLoading,
+           supportsLoadedSourcesRequest,
+           supportsLogPoints,
+           supportsTerminateThreadsRequest,
+           supportsSetExpression,
+           supportsTerminateRequest,
+           supportsDataBreakpoints,
+           supportsReadMemoryRequest
+         )
+      )
+      (fun (
          supportTerminateDebuggee,
          supportSuspendDebuggee,
          supportsDelayedStackTraceLoading,
@@ -489,7 +627,59 @@ module Capabilities = struct
          supportsSetExpression,
          supportsTerminateRequest,
          supportsDataBreakpoints,
-         supportsReadMemoryRequest,
+         supportsReadMemoryRequest
+       ) -> {
+           supportTerminateDebuggee;
+           supportSuspendDebuggee;
+           supportsDelayedStackTraceLoading;
+           supportsLoadedSourcesRequest;
+           supportsLogPoints;
+           supportsTerminateThreadsRequest;
+           supportsSetExpression;
+           supportsTerminateRequest;
+           supportsDataBreakpoints;
+           supportsReadMemoryRequest;
+         }
+      )
+      (obj10
+         (opt "supportTerminateDebuggee" bool)
+         (opt "supportSuspendDebuggee" bool)
+         (opt "supportsDelayedStackTraceLoading" bool)
+         (opt "supportsLoadedSourcesRequest" bool)
+         (opt "supportsLogPoints" bool)
+         (opt "supportsTerminateThreadsRequest" bool)
+         (opt "supportsSetExpression" bool)
+         (opt "supportsTerminateRequest" bool)
+         (opt "supportsDataBreakpoints" bool)
+         (opt "supportsReadMemoryRequest" bool)
+      )
+
+  let enc_t3 =
+    let open Data_encoding in
+    conv
+      (fun {
+         supportsWriteMemoryRequest;
+         supportsDisassembleRequest;
+         supportsCancelRequest;
+         supportsBreakpointLocationsRequest;
+         supportsClipboardContext;
+         supportsSteppingGranularity;
+         supportsInstructionBreakpoints;
+         supportsExceptionFilterOptions;
+         supportsSingleThreadExecutionRequests;
+       } -> (
+           supportsWriteMemoryRequest,
+           supportsDisassembleRequest,
+           supportsCancelRequest,
+           supportsBreakpointLocationsRequest,
+           supportsClipboardContext,
+           supportsSteppingGranularity,
+           supportsInstructionBreakpoints,
+           supportsExceptionFilterOptions,
+           supportsSingleThreadExecutionRequests
+         )
+      )
+      (fun (
          supportsWriteMemoryRequest,
          supportsDisassembleRequest,
          supportsCancelRequest,
@@ -499,104 +689,36 @@ module Capabilities = struct
          supportsInstructionBreakpoints,
          supportsExceptionFilterOptions,
          supportsSingleThreadExecutionRequests
-       ) -> (
-           {
-             supportsConfigurationDoneRequest;
-             supportsFunctionBreakpoints;
-             supportsConditionalBreakpoints;
-             supportsHitConditionalBreakpoints;
-             supportsEvaluateForHovers;
-             exceptionBreakpointFilters;
-             supportsStepBack;
-             supportsSetVariable;
-             supportsRestartFrame;
-             supportsGotoTargetsRequest;
-           },
-           {
-             supportsStepInTargetsRequest;
-             supportsCompletionsRequest;
-             completionTriggerCharacters;
-             supportsModulesRequest;
-             additionalModuleColumns;
-             supportedChecksumAlgorithms;
-             supportsRestartRequest;
-             supportsExceptionOptions;
-             supportsValueFormattingOptions;
-             supportsExceptionInfoRequest;
-           },
-           {
-             supportTerminateDebuggee;
-             supportSuspendDebuggee;
-             supportsDelayedStackTraceLoading;
-             supportsLoadedSourcesRequest;
-             supportsLogPoints;
-             supportsTerminateThreadsRequest;
-             supportsSetExpression;
-             supportsTerminateRequest;
-             supportsDataBreakpoints;
-             supportsReadMemoryRequest;
-           },
-           {
-             supportsWriteMemoryRequest;
-             supportsDisassembleRequest;
-             supportsCancelRequest;
-             supportsBreakpointLocationsRequest;
-             supportsClipboardContext;
-             supportsSteppingGranularity;
-             supportsInstructionBreakpoints;
-             supportsExceptionFilterOptions;
-             supportsSingleThreadExecutionRequests;
-           })
+       ) -> {
+           supportsWriteMemoryRequest;
+           supportsDisassembleRequest;
+           supportsCancelRequest;
+           supportsBreakpointLocationsRequest;
+           supportsClipboardContext;
+           supportsSteppingGranularity;
+           supportsInstructionBreakpoints;
+           supportsExceptionFilterOptions;
+           supportsSingleThreadExecutionRequests;
+         }
       )
-      (tup4
-         (obj10
-            (opt "supportsConfigurationDoneRequest" bool)
-            (opt "supportsFunctionBreakpoints" bool)
-            (opt "supportsConditionalBreakpoints" bool)
-            (opt "supportsHitConditionalBreakpoints" bool)
-            (opt "supportsEvaluateForHovers" bool)
-            (opt "exceptionBreakpointFilters" @@ list ExceptionBreakpointsFilter.enc)
-            (opt "supportsStepBack" bool)
-            (opt "supportsSetVariable" bool)
-            (opt "supportsRestartFrame" bool)
-            (opt "supportsGotoTargetsRequest" bool)
-         )
-         (obj10
-            (opt "supportsStepInTargetsRequest" bool)
-            (opt "supportsCompletionsRequest" bool)
-            (opt "completionTriggerCharacters" @@ list string)
-            (opt "supportsModulesRequest" bool)
-            (opt "additionalModuleColumns" ColumnDescriptor.enc)
-            (opt "supportedChecksumAlgorithms" @@ list ChecksumAlgorithm.enc)
-            (opt "supportsRestartRequest" bool)
-            (opt "supportsExceptionOptions" bool)
-            (opt "supportsValueFormattingOptions" bool)
-            (opt "supportsExceptionInfoRequest" bool)
-         )
-         (obj10
-            (opt "supportTerminateDebuggee" bool)
-            (opt "supportSuspendDebuggee" bool)
-            (opt "supportsDelayedStackTraceLoading" bool)
-            (opt "supportsLoadedSourcesRequest" bool)
-            (opt "supportsLogPoints" bool)
-            (opt "supportsTerminateThreadsRequest" bool)
-            (opt "supportsSetExpression" bool)
-            (opt "supportsTerminateRequest" bool)
-            (opt "supportsDataBreakpoints" bool)
-            (opt "supportsReadMemoryRequest" bool)
-         )
-         (obj9
-            (opt "supportsWriteMemoryRequest" bool)
-            (opt "supportsDisassembleRequest" bool)
-            (opt "supportsCancelRequest" bool)
-            (opt "supportsBreakpointLocationsRequest" bool)
-            (opt "supportsClipboardContext" bool)
-            (opt "supportsSteppingGranularity" bool)
-            (opt "supportsInstructionBreakpoints" bool)
-            (opt "supportsExceptionFilterOptions" bool)
-            (opt "supportsSingleThreadExecutionRequests" bool)
-         )
+      (obj9
+         (opt "supportsWriteMemoryRequest" bool)
+         (opt "supportsDisassembleRequest" bool)
+         (opt "supportsCancelRequest" bool)
+         (opt "supportsBreakpointLocationsRequest" bool)
+         (opt "supportsClipboardContext" bool)
+         (opt "supportsSteppingGranularity" bool)
+         (opt "supportsInstructionBreakpoints" bool)
+         (opt "supportsExceptionFilterOptions" bool)
+         (opt "supportsSingleThreadExecutionRequests" bool)
       )
+
+
+  type t = (t0 * (t1 * (t2 * t3)))
+
+  let enc =
+    let open Data_encoding in
+    merge_objs enc_t0 @@ merge_objs enc_t1 @@ merge_objs enc_t2 enc_t3
 
 end
 

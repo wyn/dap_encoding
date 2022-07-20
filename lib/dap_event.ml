@@ -109,13 +109,13 @@ end
 
 module InitializedEvent = struct
 
-  type cls_t = unit option Event.cls_t
+  type cls_t = unit Event.cls_t
 
   class cls (seq:int64) = object
-    inherit [unit option] Event.cls seq Initialized None
+    inherit [unit] Event.cls seq Initialized ()
   end
 
-  let enc = Event.enc (Data_encoding.(option unit))
+  let enc = Event.enc (Data_encoding.unit)
 
 end
 
@@ -537,6 +537,22 @@ module ProcessEvent = struct
     | Attach
     | AttachForSuspendedLaunch
 
+  let start_method_enc =
+    let open Data_encoding in
+    conv
+      (function
+        | Launch -> "launch"
+        | Attach -> "attach"
+        | AttachForSuspendedLaunch -> "attachForSuspendedLaunch"
+      )
+      (function
+        | "launch" -> Launch
+        | "attach" -> Attach
+        | "attachForSuspendedLaunch" -> AttachForSuspendedLaunch
+        | _ -> failwith "Unknown start method"
+      )
+      string
+
   type body = {
     name: string;
     systemProcessId: int64 option;
@@ -550,6 +566,45 @@ module ProcessEvent = struct
   class cls (seq:int64) (body:body) = object
     inherit [body] Event.cls seq Process body
   end
+
+  let enc =
+    let open Data_encoding in
+    conv
+      (fun {
+         name;
+         systemProcessId;
+         isLocalProcess;
+         startMethod;
+         pointerSize;
+       } -> (
+           name,
+           systemProcessId,
+           isLocalProcess,
+           startMethod,
+           pointerSize
+         )
+      )
+      (fun (
+         name,
+         systemProcessId,
+         isLocalProcess,
+         startMethod,
+         pointerSize
+       ) -> {
+           name;
+           systemProcessId;
+           isLocalProcess;
+           startMethod;
+           pointerSize;
+         }
+      )
+      (obj5
+         (req "name" string)
+         (opt "systemProcessId" int64)
+         (opt "isLocalProcess" bool)
+         (opt "startMethod" start_method_enc)
+         (opt "pointerSize" int64)
+      )
 
 end
 
@@ -575,7 +630,6 @@ module CapabilitiesEvent = struct
       (obj1
          (req "capabilities" Capabilities.enc)
       )
-
 
 end
 
