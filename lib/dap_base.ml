@@ -238,6 +238,31 @@ module Source = struct
 end
 
 
+module Reason = struct
+
+  type t =
+    | New
+    | Changed
+    | Removed
+
+  let enc =
+    let open Data_encoding in
+    conv
+      (function
+        | New -> "new"
+        | Changed -> "changed"
+        | Removed -> "removed"
+      )
+      (function
+        | "new" -> New
+        | "changed" -> Changed
+        | "removed" -> Removed
+        | _ -> failwith "Unknown start method"
+      )
+      string
+end
+
+
 module Breakpoint = struct
 
   type 'json t = {

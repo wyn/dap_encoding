@@ -469,13 +469,8 @@ end
 
 module BreakpointEvent = struct
 
-  type reason =
-    | Changed
-    | New
-    | Removed
-
   type 'json body = {
-    reason: reason;
+    reason: Reason.t;
     breakpoint: 'json Breakpoint.t;
   }
 
@@ -490,13 +485,8 @@ end
 
 module ModuleEvent = struct
 
-  type reason =
-    | New
-    | Changed
-    | Removed
-
   type body = {
-    reason: reason;
+    reason: Reason.t;
     module_: Module_.t
   }
 
@@ -511,29 +501,8 @@ end
 
 module LoadedSourceEvent = struct
 
-  type reason =
-    | New
-    | Changed
-    | Removed
-
-  let reason_enc =
-    let open Data_encoding in
-    conv
-      (function
-        | New -> "new"
-        | Changed -> "changed"
-        | Removed -> "removed"
-      )
-      (function
-        | "new" -> New
-        | "changed" -> Changed
-        | "removed" -> Removed
-        | _ -> failwith "Unknown start method"
-      )
-      string
-
   type 'json body = {
-    reason: reason;
+    reason: Reason.t;
     source: 'json Source.t;
   }
 
@@ -563,7 +532,7 @@ module LoadedSourceEvent = struct
          }
       )
       (obj2
-         (req "reason" reason_enc)
+         (req "reason" Reason.enc)
          (req "source" @@ Source.enc json)
       )
 
