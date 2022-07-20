@@ -112,7 +112,7 @@ module Message = struct
       (obj7
          (req "id" int64)
          (req "format" string)
-         (opt "variables" (list @@ tup2 string string))
+         (opt "variables" @@ list @@ tup2 string string)
          (opt "sendTelemetry" bool)
          (opt "showUser" bool)
          (opt "url" string)
@@ -232,7 +232,7 @@ module Source = struct
              (opt "origin" string)
              (opt "sources" (list e))
              (opt "adapterData" json_enc)
-             (opt "checksums" (list Checksum.enc))
+             (opt "checksums" @@ list Checksum.enc)
           )
       )
 end
@@ -257,7 +257,7 @@ module Reason = struct
         | "new" -> New
         | "changed" -> Changed
         | "removed" -> Removed
-        | _ -> failwith "Unknown start method"
+        | _ -> failwith "Unknown reason"
       )
       string
 end
