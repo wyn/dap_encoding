@@ -566,6 +566,17 @@ module CapabilitiesEvent = struct
     inherit [body] Event.cls seq Capabilities body
   end
 
+  let enc =
+    let open Data_encoding in
+    Event.enc @@
+    conv
+      (fun {capabilities} -> capabilities)
+      (fun capabilities -> {capabilities})
+      (obj1
+         (req "capabilities" Capabilities.enc)
+      )
+
+
 end
 
 
@@ -577,7 +588,7 @@ module ProgressStartEvent = struct
     requestId: int64 option;
     cancellable: bool option;
     message: string option;
-    percentage: int64 option;
+    percentage: int option;
   }
 
   type cls_t = body Event.cls_t
@@ -585,6 +596,52 @@ module ProgressStartEvent = struct
   class cls (seq:int64) (body:body) = object
     inherit [body] Event.cls seq ProgressStart body
   end
+
+  let enc =
+    let open Data_encoding in
+    Event.enc @@
+    conv
+      (fun {
+         progressId;
+         title;
+         requestId;
+         cancellable;
+         message;
+         percentage;
+
+       } -> (
+           progressId,
+           title,
+           requestId,
+           cancellable,
+           message,
+           percentage
+         ))
+      (fun  (
+         progressId,
+         title,
+         requestId,
+         cancellable,
+         message,
+         percentage
+       ) -> {
+           progressId;
+           title;
+           requestId;
+           cancellable;
+           message;
+           percentage;
+
+         })
+      (obj6
+         (req "progressId" string)
+         (req "title" string)
+         (opt "requestId" int64)
+         (opt "cancellable" bool)
+         (opt "message" string)
+         (opt "percentage" @@ ranged_int 0 100)
+      )
+
 
 end
 
@@ -594,7 +651,7 @@ module ProgressUpdateEvent = struct
   type body = {
     progressId: string;
     message: string option;
-    percentage: int64 option;
+    percentage: int option;
   }
 
   type cls_t = body Event.cls_t
@@ -602,6 +659,18 @@ module ProgressUpdateEvent = struct
   class cls (seq:int64) (body:body) = object
     inherit [body] Event.cls seq ProgressUpdate body
   end
+
+  let enc =
+    let open Data_encoding in
+    Event.enc @@
+    conv
+      (fun {progressId; message; percentage} -> (progressId, message, percentage))
+      (fun (progressId, message, percentage) -> {progressId; message; percentage})
+      (obj3
+         (req "progressId" string)
+         (opt "message" string)
+         (opt "percentage" (ranged_int 0 100))
+      )
 
 end
 
@@ -618,6 +687,17 @@ module ProgressEndEvent = struct
   class cls (seq:int64) (body:body) = object
     inherit [body] Event.cls seq ProgressEnd body
   end
+
+  let enc =
+    let open Data_encoding in
+    Event.enc @@
+    conv
+      (fun {progressId; message} -> (progressId, message))
+      (fun (progressId, message) -> {progressId; message})
+      (obj2
+         (req "progressId" string)
+         (opt "message" string)
+      )
 
 end
 
@@ -637,6 +717,18 @@ module InvalidatedEvent = struct
     inherit [body] Event.cls seq Invalidated body
   end
 
+  let enc =
+    let open Data_encoding in
+    Event.enc @@
+    conv
+      (fun {areas; threadId; stackFrameId} -> (areas, threadId, stackFrameId))
+      (fun (areas, threadId, stackFrameId) -> {areas; threadId; stackFrameId})
+      (obj3
+         (opt "areas" (list InvalidatedAreas.enc))
+         (opt "threadId" int64)
+         (opt "stackFrameId" int64)
+      )
+
 end
 
 
@@ -653,5 +745,17 @@ module MemoryEvent = struct
   class cls (seq:int64) (body:body) = object
     inherit [body] Event.cls seq Memory body
   end
+
+  let enc =
+    let open Data_encoding in
+    Event.enc @@
+    conv
+      (fun {memoryReference; offset; count} -> (memoryReference, offset, count))
+      (fun (memoryReference, offset, count) -> {memoryReference; offset; count})
+      (obj3
+         (req "memoryReference" string)
+         (req "offset" int64)
+         (req "count" int64)
+      )
 
 end

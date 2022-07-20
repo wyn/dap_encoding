@@ -313,47 +313,290 @@ end
 
 module Capabilities = struct
 
-  type t = {
-        supportsConfigurationDoneRequest: bool option;
-        supportsFunctionBreakpoints: bool option;
-        supportsConditionalBreakpoints: bool option;
-        supportsHitConditionalBreakpoints: bool option;
-        supportsEvaluateForHovers: bool option;
-        exceptionBreakpointFilters: ExceptionBreakpointsFilter.t list option;
-        supportsStepBack: bool option;
-        supportsSetVariable: bool option;
-        supportsRestartFrame: bool option;
-        supportsGotoTargetsRequest: bool option;
-        supportsStepInTargetsRequest: bool option;
-        supportsCompletionsRequest: bool option;
-        completionTriggerCharacters: string list option;
-        supportsModulesRequest: bool option;
-        additionalModuleColumns: ColumnDescriptor.t option;
-        supportedChecksumAlgorithms: ChecksumAlgorithm.t list option;
-        supportsRestartRequest: bool option;
-        supportsExceptionOptions: bool option;
-        supportsValueFormattingOptions: bool option;
-        supportsExceptionInfoRequest: bool option;
-        supportTerminateDebuggee: bool option;
-        supportSuspendDebuggee: bool option;
-        supportsDelayedStackTraceLoading: bool option;
-        supportsLoadedSourcesRequest: bool option;
-        supportsLogPoints: bool option;
-        supportsTerminateThreadsRequest: bool option;
-        supportsSetExpression: bool option;
-        supportsTerminateRequest: bool option;
-        supportsDataBreakpoints: bool option;
-        supportsReadMemoryRequest: bool option;
-        supportsWriteMemoryRequest: bool option;
-        supportsDisassembleRequest: bool option;
-        supportsCancelRequest: bool option;
-        supportsBreakpointLocationsRequest: bool option;
-        supportsClipboardContext: bool option;
-        supportsSteppingGranularity: bool option;
-        supportsInstructionBreakpoints: bool option;
-        supportsExceptionFilterOptions: bool option;
-        supportsSingleThreadExecutionRequests: bool option;
-}
+  (* NOTE encoders only support up to 10 fields for an object
+     so will have to group these by 10s *)
+  type t0 = {
+    supportsConfigurationDoneRequest: bool option;
+    supportsFunctionBreakpoints: bool option;
+    supportsConditionalBreakpoints: bool option;
+    supportsHitConditionalBreakpoints: bool option;
+    supportsEvaluateForHovers: bool option;
+    exceptionBreakpointFilters: ExceptionBreakpointsFilter.t list option;
+    supportsStepBack: bool option;
+    supportsSetVariable: bool option;
+    supportsRestartFrame: bool option;
+    supportsGotoTargetsRequest: bool option;
+  }
+
+  type t1 = {
+    supportsStepInTargetsRequest: bool option;
+    supportsCompletionsRequest: bool option;
+    completionTriggerCharacters: string list option;
+    supportsModulesRequest: bool option;
+    additionalModuleColumns: ColumnDescriptor.t option;
+    supportedChecksumAlgorithms: ChecksumAlgorithm.t list option;
+    supportsRestartRequest: bool option;
+    supportsExceptionOptions: bool option;
+    supportsValueFormattingOptions: bool option;
+    supportsExceptionInfoRequest: bool option;
+  }
+
+  type t2 = {
+    supportTerminateDebuggee: bool option;
+    supportSuspendDebuggee: bool option;
+    supportsDelayedStackTraceLoading: bool option;
+    supportsLoadedSourcesRequest: bool option;
+    supportsLogPoints: bool option;
+    supportsTerminateThreadsRequest: bool option;
+    supportsSetExpression: bool option;
+    supportsTerminateRequest: bool option;
+    supportsDataBreakpoints: bool option;
+    supportsReadMemoryRequest: bool option;
+  }
+
+  type t3 = {
+    supportsWriteMemoryRequest: bool option;
+    supportsDisassembleRequest: bool option;
+    supportsCancelRequest: bool option;
+    supportsBreakpointLocationsRequest: bool option;
+    supportsClipboardContext: bool option;
+    supportsSteppingGranularity: bool option;
+    supportsInstructionBreakpoints: bool option;
+    supportsExceptionFilterOptions: bool option;
+    supportsSingleThreadExecutionRequests: bool option;
+  }
+
+  type t = (t0*t1*t2*t3)
+
+  let enc =
+    let open Data_encoding in
+    conv
+      (fun (
+         {
+           supportsConfigurationDoneRequest;
+           supportsFunctionBreakpoints;
+           supportsConditionalBreakpoints;
+           supportsHitConditionalBreakpoints;
+           supportsEvaluateForHovers;
+           exceptionBreakpointFilters;
+           supportsStepBack;
+           supportsSetVariable;
+           supportsRestartFrame;
+           supportsGotoTargetsRequest;
+         },
+         {
+           supportsStepInTargetsRequest;
+           supportsCompletionsRequest;
+           completionTriggerCharacters;
+           supportsModulesRequest;
+           additionalModuleColumns;
+           supportedChecksumAlgorithms;
+           supportsRestartRequest;
+           supportsExceptionOptions;
+           supportsValueFormattingOptions;
+           supportsExceptionInfoRequest;
+         },
+         {
+           supportTerminateDebuggee;
+           supportSuspendDebuggee;
+           supportsDelayedStackTraceLoading;
+           supportsLoadedSourcesRequest;
+           supportsLogPoints;
+           supportsTerminateThreadsRequest;
+           supportsSetExpression;
+           supportsTerminateRequest;
+           supportsDataBreakpoints;
+           supportsReadMemoryRequest;
+         },
+         {
+           supportsWriteMemoryRequest;
+           supportsDisassembleRequest;
+           supportsCancelRequest;
+           supportsBreakpointLocationsRequest;
+           supportsClipboardContext;
+           supportsSteppingGranularity;
+           supportsInstructionBreakpoints;
+           supportsExceptionFilterOptions;
+           supportsSingleThreadExecutionRequests;
+         }) -> (
+           supportsConfigurationDoneRequest,
+           supportsFunctionBreakpoints,
+           supportsConditionalBreakpoints,
+           supportsHitConditionalBreakpoints,
+           supportsEvaluateForHovers,
+           exceptionBreakpointFilters,
+           supportsStepBack,
+           supportsSetVariable,
+           supportsRestartFrame,
+           supportsGotoTargetsRequest,
+           supportsStepInTargetsRequest,
+           supportsCompletionsRequest,
+           completionTriggerCharacters,
+           supportsModulesRequest,
+           additionalModuleColumns,
+           supportedChecksumAlgorithms,
+           supportsRestartRequest,
+           supportsExceptionOptions,
+           supportsValueFormattingOptions,
+           supportsExceptionInfoRequest,
+           supportTerminateDebuggee,
+           supportSuspendDebuggee,
+           supportsDelayedStackTraceLoading,
+           supportsLoadedSourcesRequest,
+           supportsLogPoints,
+           supportsTerminateThreadsRequest,
+           supportsSetExpression,
+           supportsTerminateRequest,
+           supportsDataBreakpoints,
+           supportsReadMemoryRequest,
+           supportsWriteMemoryRequest,
+           supportsDisassembleRequest,
+           supportsCancelRequest,
+           supportsBreakpointLocationsRequest,
+           supportsClipboardContext,
+           supportsSteppingGranularity,
+           supportsInstructionBreakpoints,
+           supportsExceptionFilterOptions,
+           supportsSingleThreadExecutionRequests
+         ))
+      (fun (
+         supportsConfigurationDoneRequest,
+         supportsFunctionBreakpoints,
+         supportsConditionalBreakpoints,
+         supportsHitConditionalBreakpoints,
+         supportsEvaluateForHovers,
+         exceptionBreakpointFilters,
+         supportsStepBack,
+         supportsSetVariable,
+         supportsRestartFrame,
+         supportsGotoTargetsRequest,
+         supportsStepInTargetsRequest,
+         supportsCompletionsRequest,
+         completionTriggerCharacters,
+         supportsModulesRequest,
+         additionalModuleColumns,
+         supportedChecksumAlgorithms,
+         supportsRestartRequest,
+         supportsExceptionOptions,
+         supportsValueFormattingOptions,
+         supportsExceptionInfoRequest,
+         supportTerminateDebuggee,
+         supportSuspendDebuggee,
+         supportsDelayedStackTraceLoading,
+         supportsLoadedSourcesRequest,
+         supportsLogPoints,
+         supportsTerminateThreadsRequest,
+         supportsSetExpression,
+         supportsTerminateRequest,
+         supportsDataBreakpoints,
+         supportsReadMemoryRequest,
+         supportsWriteMemoryRequest,
+         supportsDisassembleRequest,
+         supportsCancelRequest,
+         supportsBreakpointLocationsRequest,
+         supportsClipboardContext,
+         supportsSteppingGranularity,
+         supportsInstructionBreakpoints,
+         supportsExceptionFilterOptions,
+         supportsSingleThreadExecutionRequests
+       ) -> (
+           {
+             supportsConfigurationDoneRequest;
+             supportsFunctionBreakpoints;
+             supportsConditionalBreakpoints;
+             supportsHitConditionalBreakpoints;
+             supportsEvaluateForHovers;
+             exceptionBreakpointFilters;
+             supportsStepBack;
+             supportsSetVariable;
+             supportsRestartFrame;
+             supportsGotoTargetsRequest;
+           },
+           {
+             supportsStepInTargetsRequest;
+             supportsCompletionsRequest;
+             completionTriggerCharacters;
+             supportsModulesRequest;
+             additionalModuleColumns;
+             supportedChecksumAlgorithms;
+             supportsRestartRequest;
+             supportsExceptionOptions;
+             supportsValueFormattingOptions;
+             supportsExceptionInfoRequest;
+           },
+           {
+             supportTerminateDebuggee;
+             supportSuspendDebuggee;
+             supportsDelayedStackTraceLoading;
+             supportsLoadedSourcesRequest;
+             supportsLogPoints;
+             supportsTerminateThreadsRequest;
+             supportsSetExpression;
+             supportsTerminateRequest;
+             supportsDataBreakpoints;
+             supportsReadMemoryRequest;
+           },
+           {
+             supportsWriteMemoryRequest;
+             supportsDisassembleRequest;
+             supportsCancelRequest;
+             supportsBreakpointLocationsRequest;
+             supportsClipboardContext;
+             supportsSteppingGranularity;
+             supportsInstructionBreakpoints;
+             supportsExceptionFilterOptions;
+             supportsSingleThreadExecutionRequests;
+           })
+      )
+      (tup4
+         (obj10
+            (opt "supportsConfigurationDoneRequest" bool)
+            (opt "supportsFunctionBreakpoints" bool)
+            (opt "supportsConditionalBreakpoints" bool)
+            (opt "supportsHitConditionalBreakpoints" bool)
+            (opt "supportsEvaluateForHovers" bool)
+            (opt "exceptionBreakpointFilters" @@ list ExceptionBreakpointsFilter.enc)
+            (opt "supportsStepBack" bool)
+            (opt "supportsSetVariable" bool)
+            (opt "supportsRestartFrame" bool)
+            (opt "supportsGotoTargetsRequest" bool)
+         )
+         (obj10
+            (opt "supportsStepInTargetsRequest" bool)
+            (opt "supportsCompletionsRequest" bool)
+            (opt "completionTriggerCharacters" @@ list string)
+            (opt "supportsModulesRequest" bool)
+            (opt "additionalModuleColumns" ColumnDescriptor.enc)
+            (opt "supportedChecksumAlgorithms" @@ list ChecksumAlgorithm.enc)
+            (opt "supportsRestartRequest" bool)
+            (opt "supportsExceptionOptions" bool)
+            (opt "supportsValueFormattingOptions" bool)
+            (opt "supportsExceptionInfoRequest" bool)
+         )
+         (obj10
+            (opt "supportTerminateDebuggee" bool)
+            (opt "supportSuspendDebuggee" bool)
+            (opt "supportsDelayedStackTraceLoading" bool)
+            (opt "supportsLoadedSourcesRequest" bool)
+            (opt "supportsLogPoints" bool)
+            (opt "supportsTerminateThreadsRequest" bool)
+            (opt "supportsSetExpression" bool)
+            (opt "supportsTerminateRequest" bool)
+            (opt "supportsDataBreakpoints" bool)
+            (opt "supportsReadMemoryRequest" bool)
+         )
+         (obj9
+            (opt "supportsWriteMemoryRequest" bool)
+            (opt "supportsDisassembleRequest" bool)
+            (opt "supportsCancelRequest" bool)
+            (opt "supportsBreakpointLocationsRequest" bool)
+            (opt "supportsClipboardContext" bool)
+            (opt "supportsSteppingGranularity" bool)
+            (opt "supportsInstructionBreakpoints" bool)
+            (opt "supportsExceptionFilterOptions" bool)
+            (opt "supportsSingleThreadExecutionRequests" bool)
+         )
+      )
 
 end
 
@@ -364,4 +607,22 @@ module InvalidatedAreas = struct
     | Stacks
     | Threads
     | Variables
+
+  let enc =
+    let open Data_encoding in
+    conv
+      (function
+        | All -> "all"
+        | Stacks -> "stacks"
+        | Threads -> "threads"
+        | Variables -> "variables"
+      )
+      (function
+        | "all" -> All
+        | "stacks" -> Stacks
+        | "threads" -> Threads
+        | "variables" -> Variables
+        | _ -> failwith "Unknown invalidated areas"
+      )
+      string
 end
