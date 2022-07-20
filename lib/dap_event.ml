@@ -516,6 +516,22 @@ module LoadedSourceEvent = struct
     | Changed
     | Removed
 
+  let reason_enc =
+    let open Data_encoding in
+    conv
+      (function
+        | New -> "new"
+        | Changed -> "changed"
+        | Removed -> "removed"
+      )
+      (function
+        | "new" -> New
+        | "changed" -> Changed
+        | "removed" -> Removed
+        | _ -> failwith "Unknown start method"
+      )
+      string
+
   type 'json body = {
     reason: reason;
     source: 'json Source.t;
@@ -526,6 +542,30 @@ module LoadedSourceEvent = struct
   class ['json] cls (seq:int64) (body:'json body) = object
     inherit ['json body] Event.cls seq LoadedSource body
   end
+
+  let enc =
+    let open Data_encoding in
+    conv
+      (fun {
+         reason;
+         source;
+       } -> (
+           reason,
+           source
+         )
+      )
+      (fun (
+         reason,
+         source
+       ) -> {
+           reason;
+           source;
+         }
+      )
+      (obj2
+         (req "reason" reason_enc)
+         (req "source" @@ Source.enc json)
+      )
 
 end
 
