@@ -594,7 +594,7 @@ module Capabilities = struct
     supportsCompletionsRequest: bool option;
     completionTriggerCharacters: string list option;
     supportsModulesRequest: bool option;
-    additionalModuleColumns: ColumnDescriptor.t option;
+    additionalModuleColumns: ColumnDescriptor.t list option;
     supportedChecksumAlgorithms: ChecksumAlgorithm.t list option;
     supportsRestartRequest: bool option;
     supportsExceptionOptions: bool option;
@@ -747,7 +747,7 @@ module Capabilities = struct
          (opt "supportsCompletionsRequest" bool)
          (opt "completionTriggerCharacters" @@ list string)
          (opt "supportsModulesRequest" bool)
-         (opt "additionalModuleColumns" ColumnDescriptor.enc)
+         (opt "additionalModuleColumns" @@ list ColumnDescriptor.enc)
          (opt "supportedChecksumAlgorithms" @@ list ChecksumAlgorithm.enc)
          (opt "supportsRestartRequest" bool)
          (opt "supportsExceptionOptions" bool)
