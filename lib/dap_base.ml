@@ -881,6 +881,94 @@ module Capabilities = struct
 
   type t = (t0 * (t1 * (t2 * t3)))
 
+  let make
+      ?supportsConfigurationDoneRequest
+      ?supportsFunctionBreakpoints
+      ?supportsConditionalBreakpoints
+      ?supportsHitConditionalBreakpoints
+      ?supportsEvaluateForHovers
+      ?exceptionBreakpointFilters
+      ?supportsStepBack
+      ?supportsSetVariable
+      ?supportsRestartFrame
+      ?supportsGotoTargetsRequest
+      ?supportsStepInTargetsRequest
+      ?supportsCompletionsRequest
+      ?completionTriggerCharacters
+      ?supportsModulesRequest
+      ?additionalModuleColumns
+      ?supportedChecksumAlgorithms
+      ?supportsRestartRequest
+      ?supportsExceptionOptions
+      ?supportsValueFormattingOptions
+      ?supportsExceptionInfoRequest
+      ?supportTerminateDebuggee
+      ?supportSuspendDebuggee
+      ?supportsDelayedStackTraceLoading
+      ?supportsLoadedSourcesRequest
+      ?supportsLogPoints
+      ?supportsTerminateThreadsRequest
+      ?supportsSetExpression
+      ?supportsTerminateRequest
+      ?supportsDataBreakpoints
+      ?supportsReadMemoryRequest
+      ?supportsWriteMemoryRequest
+      ?supportsDisassembleRequest
+      ?supportsCancelRequest
+      ?supportsBreakpointLocationsRequest
+      ?supportsClipboardContext
+      ?supportsSteppingGranularity
+      ?supportsInstructionBreakpoints
+      ?supportsExceptionFilterOptions
+      ?supportsSingleThreadExecutionRequests
+      () : t = (
+    {
+      supportsConfigurationDoneRequest;
+      supportsFunctionBreakpoints;
+      supportsConditionalBreakpoints;
+      supportsHitConditionalBreakpoints;
+      supportsEvaluateForHovers;
+      exceptionBreakpointFilters;
+      supportsStepBack;
+      supportsSetVariable;
+      supportsRestartFrame;
+      supportsGotoTargetsRequest;
+    }, (
+      {
+        supportsStepInTargetsRequest;
+        supportsCompletionsRequest;
+        completionTriggerCharacters;
+        supportsModulesRequest;
+        additionalModuleColumns;
+        supportedChecksumAlgorithms;
+        supportsRestartRequest;
+        supportsExceptionOptions;
+        supportsValueFormattingOptions;
+        supportsExceptionInfoRequest;
+      }, (
+        {
+          supportTerminateDebuggee;
+          supportSuspendDebuggee;
+          supportsDelayedStackTraceLoading;
+          supportsLoadedSourcesRequest;
+          supportsLogPoints;
+          supportsTerminateThreadsRequest;
+          supportsSetExpression;
+          supportsTerminateRequest;
+          supportsDataBreakpoints;
+          supportsReadMemoryRequest;
+        }, {
+          supportsWriteMemoryRequest;
+          supportsDisassembleRequest;
+          supportsCancelRequest;
+          supportsBreakpointLocationsRequest;
+          supportsClipboardContext;
+          supportsSteppingGranularity;
+          supportsInstructionBreakpoints;
+          supportsExceptionFilterOptions;
+          supportsSingleThreadExecutionRequests;
+        })))
+
   let enc =
     let open Data_encoding in
     merge_objs enc_t0 @@ merge_objs enc_t1 @@ merge_objs enc_t2 enc_t3
