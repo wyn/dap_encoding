@@ -266,6 +266,15 @@ module ExitedEvent = struct
     inherit [body] Event.cls seq Exited body
   end
 
+  let enc =
+    let open Data_encoding in
+    Event.enc @@
+    conv
+      (fun {exitCode} -> exitCode)
+      (fun exitCode -> {exitCode})
+      (obj1
+         (req "exitCode" int64))
+
 end
 
 
@@ -281,17 +290,33 @@ module TerminatedEvent = struct
     inherit ['json body option] Event.cls seq Terminated body
   end
 
+  let enc =
+    let open Data_encoding in
+    Event.enc @@
+    conv
+      (fun {restart} -> restart)
+      (fun restart -> {restart})
+      (obj1
+         (req "restart" json))
+
 end
 
 
 module ThreadEvent = struct
 
-  type thread_reason =
+  type reason =
     | Started
     | Exited
 
+  let enc_reason =
+    let open Data_encoding in
+    conv
+      (function | Started -> "started" | Exited -> "exited")
+      (function | "started" -> Started | "exited" -> Exited | _ -> failwith "Unknown thread reason")
+      string
+
   type body = {
-    reason: thread_reason;
+    reason: reason;
     threadId: int64;
   }
 
@@ -301,27 +326,73 @@ module ThreadEvent = struct
     inherit [body] Event.cls seq Thread body
   end
 
+  let enc =
+    let open Data_encoding in
+    Event.enc @@
+    conv
+      (fun {reason; threadId} -> (reason, threadId))
+      (fun (reason, threadId) -> {reason; threadId})
+      (obj2
+         (req "reason" enc_reason)
+         (req "threadId" int64))
+
 end
 
 
 module OutputEvent = struct
 
-  type output_category =
+  type category =
     | Console
     | Important
     | Stdout
     | Stderr
     | Telemetry
 
-  type group_t =
+  let enc_category =
+    let open Data_encoding in
+    conv
+      (function
+        | Console -> "console"
+        | Important -> "important"
+        | Stdout -> "stdout"
+        | Stderr -> "stderr"
+        | Telemetry -> "telemetry"
+      )
+      (function
+        | "console" -> Console
+        | "important" -> Important
+        | "stdout" -> Stdout
+        | "stderr" -> Stderr
+        | "telemetry" -> Telemetry
+        | _ -> failwith "Unknown output category"
+      )
+      string
+
+  type group =
     | Start
     | StartCollapsed
     | End
 
+  let enc_group =
+    let open Data_encoding in
+    conv
+      (function
+        | Start -> "start"
+        | StartCollapsed -> "startCollapsed"
+        | End -> "end"
+      )
+      (function
+        | "start" -> Start
+        | "startCollapsed" -> StartCollapsed
+        | "end" -> End
+        | _ -> failwith "Unknown output group"
+      )
+      string
+
   type 'json body = {
     output: string;
-    category: output_category option;
-    group: group_t option;
+    category: category option;
+    group: group option;
     variablesReference: int64 option;
     source: 'json Source.t option;
     line: int64 option;
@@ -336,6 +407,62 @@ module OutputEvent = struct
       (body:'json body) = object
     inherit ['json body] Event.cls seq Output body
   end
+
+  let enc =
+    let open Data_encoding in
+    Event.enc @@
+    conv
+      (fun {
+         output;
+         category;
+         group;
+         variablesReference;
+         source;
+         line;
+         column;
+         data
+       } -> (
+           output,
+           category,
+           group,
+           variablesReference,
+           source,
+           line,
+           column,
+           data
+         )
+      )
+      (fun (
+         output,
+         category,
+         group,
+         variablesReference,
+         source,
+         line,
+         column,
+         data
+       )
+         -> {
+             output;
+             category;
+             group;
+             variablesReference;
+             source;
+             line;
+             column;
+             data
+           }
+      )
+      (obj8
+         (req "output" string)
+         (opt "category" enc_category)
+         (opt "group" enc_group)
+         (opt "variablesReference" int64)
+         (opt "source" (Source.enc json))
+         (opt "line" int64)
+         (opt "column" int64)
+         (opt "data" json)
+      )
 
 end
 
