@@ -23,6 +23,53 @@ module Event = struct
     | Memory
     | RunInTerminal
 
+  let enc_t =
+    let open Data_encoding in
+    conv
+      (function
+        | Initialized -> "initialized"
+        | Stopped -> "stopped"
+        | Continued -> "continued"
+        | Exited -> "exited"
+        | Terminated -> "terminated"
+        | Thread -> "thread"
+        | Output -> "output"
+        | Breakpoint -> "breakpoint"
+        | Module -> "module"
+        | LoadedSource -> "loadedSource"
+        | Process -> "process"
+        | Capabilities -> "capabilities"
+        | ProgressStart -> "progressStart"
+        | ProgressUpdate -> "progressUpdate"
+        | ProgressEnd -> "progressEnd"
+        | Invalidated -> "invalidated"
+        | Memory -> "memory"
+        | RunInTerminal -> "runInTerminal"
+      )
+      (function
+        | "initialized" -> Initialized
+        | "stopped" -> Stopped
+        | "continued" -> Continued
+        | "exited" -> Exited
+        | "terminated" -> Terminated
+        | "thread" -> Thread
+        | "output" -> Output
+        | "breakpoint" -> Breakpoint
+        | "module" -> Module
+        | "loadedSource" -> LoadedSource
+        | "process" -> Process
+        | "capabilities" -> Capabilities
+        | "progressStart" -> ProgressStart
+        | "progressUpdate" -> ProgressUpdate
+        | "progressEnd" -> ProgressEnd
+        | "invalidated" -> Invalidated
+        | "memory" -> Memory
+        | "runInTerminal" -> RunInTerminal
+        | _ -> failwith "Unknown event"
+      )
+      string
+
+
   type 'json cls_t = <
     ProtocolMessage.cls_t;
     event:t;
@@ -41,6 +88,22 @@ module Event = struct
 
   end
 
+  let enc js =
+    let open Data_encoding in
+    conv
+      (fun (r : < 'json cls_t >) ->
+         (r#seq, r#type_, r#event, r#body) )
+
+      (fun (seq, _, event, body) ->
+         new cls seq event body)
+
+      (obj4
+         (req "seq" int64)
+         (req "type" ProtocolMessage.enc_t)
+         (req "event" enc_t)
+         (req "body" js)
+      )
+
 end
 
 
@@ -52,12 +115,14 @@ module InitializedEvent = struct
     inherit [unit option] Event.cls seq Initialized None
   end
 
+  let enc = Event.enc (Data_encoding.(option unit))
+
 end
 
 
 module StoppedEvent = struct
 
-  type stopping_reason =
+  type reason =
     | Step
     | Breakpoint
     | Exception
@@ -68,9 +133,36 @@ module StoppedEvent = struct
     | Data_breakpoint
     | Instruction_breakpoint
 
+  let enc_reason =
+    let open Data_encoding in
+    conv
+      (function
+        | Step -> "step"
+        | Breakpoint -> "breakpoint"
+        | Exception -> "exception"
+        | Pause -> "pause"
+        | Entry -> "entry"
+        | Goto -> "goto"
+        | Function_breakpoint -> "function breakpoint"
+        | Data_breakpoint -> "data breakpoint"
+        | Instruction_breakpoint -> "instruction breakpoint"
+      )
+      (function
+        | "step" -> Step
+        | "breakpoint" -> Breakpoint
+        | "exception" -> Exception
+        | "pause" -> Pause
+        | "entry" -> Entry
+        | "goto" -> Goto
+        | "function breakpoint" -> Function_breakpoint
+        | "data breakpoint" -> Data_breakpoint
+        | "instruction breakpoint" -> Instruction_breakpoint
+        | _ -> failwith "Unknown stopping reason"
+      )
+      string
 
   type body = {
-    reason: stopping_reason;
+    reason: reason;
     description: string option;
     threadId: int64 option;
     preserveFocusHint: bool option;
@@ -84,6 +176,54 @@ module StoppedEvent = struct
   class cls (seq:int64) (body:body) = object
     inherit [body] Event.cls seq Stopped body
   end
+
+  let enc =
+    let open Data_encoding in
+    Event.enc @@
+    conv
+      (fun {
+         reason;
+         description;
+         threadId;
+         preserveFocusHint;
+         text;
+         allThreadsStopped;
+         hitBreakpointIds
+       } -> (
+           reason,
+           description,
+           threadId,
+           preserveFocusHint,
+           text,
+           allThreadsStopped,
+           hitBreakpointIds
+         ))
+      (fun (
+           reason,
+           description,
+           threadId,
+           preserveFocusHint,
+           text,
+           allThreadsStopped,
+           hitBreakpointIds
+         ) -> {
+         reason;
+         description;
+         threadId;
+         preserveFocusHint;
+         text;
+         allThreadsStopped;
+         hitBreakpointIds
+       })
+      (obj7
+         (req "reason" enc_reason)
+         (opt "description" string)
+         (opt "threadId" int64)
+         (opt "preserveFocusHint" bool)
+         (opt "text" string)
+         (opt "allThreadsStopped" bool)
+         (opt "hitBreakpointIds" (list int64))
+         )
 
 end
 
@@ -100,6 +240,16 @@ module ContinuedEvent = struct
   class cls (seq:int64) (body:body) = object
     inherit [body] Event.cls seq Continued body
   end
+
+  let enc =
+    let open Data_encoding in
+    Event.enc @@
+    conv
+      (fun {threadId; allThreadsContinued} -> (threadId, allThreadsContinued))
+      (fun (threadId, allThreadsContinued) -> {threadId; allThreadsContinued})
+      (obj2
+         (req "threadId" int64)
+         (opt "allThreadsContinued" bool))
 
 end
 
