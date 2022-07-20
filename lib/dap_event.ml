@@ -480,6 +480,31 @@ module BreakpointEvent = struct
     inherit ['json body] Event.cls seq Breakpoint body
   end
 
+  let enc =
+    let open Data_encoding in
+    Event.enc @@
+    conv
+      (fun {
+         reason;
+         breakpoint;
+       } -> (
+           reason,
+           breakpoint
+         )
+      )
+      (fun (
+         reason,
+         breakpoint
+       ) -> {
+           reason;
+           breakpoint;
+         }
+      )
+      (obj2
+         (req "reason" Reason.enc)
+         (req "breakpoint" Breakpoint.enc)
+      )
+
 end
 
 
@@ -495,6 +520,31 @@ module ModuleEvent = struct
   class cls (seq:int64) (body:body) = object
     inherit [body] Event.cls seq Module body
   end
+
+  let enc =
+    let open Data_encoding in
+    Event.enc @@
+    conv
+      (fun {
+         reason;
+         module_;
+       } -> (
+           reason,
+           module_
+         )
+      )
+      (fun (
+         reason,
+         module_
+       ) -> {
+           reason;
+           module_;
+         }
+      )
+      (obj2
+         (req "reason" Reason.enc)
+         (req "module" Module_.enc)
+      )
 
 end
 
@@ -514,6 +564,7 @@ module LoadedSourceEvent = struct
 
   let enc =
     let open Data_encoding in
+    Event.enc @@
     conv
       (fun {
          reason;
@@ -578,6 +629,7 @@ module ProcessEvent = struct
 
   let enc =
     let open Data_encoding in
+    Event.enc @@
     conv
       (fun {
          name;

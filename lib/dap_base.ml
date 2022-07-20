@@ -278,6 +278,70 @@ module Breakpoint = struct
     offset: int64 option;
   }
 
+  let enc =
+    let open Data_encoding in
+    conv
+      (fun {
+         id;
+         verified;
+         message;
+         source;
+         line;
+         column;
+         endLine;
+         endColumn;
+         instructionReference;
+         offset;
+       } -> (
+           id,
+           verified,
+           message,
+           source,
+           line,
+           column,
+           endLine,
+           endColumn,
+           instructionReference,
+           offset
+         )
+      )
+      (fun (
+         id,
+         verified,
+         message,
+         source,
+         line,
+         column,
+         endLine,
+         endColumn,
+         instructionReference,
+         offset
+       ) -> {
+           id;
+           verified;
+           message;
+           source;
+           line;
+           column;
+           endLine;
+           endColumn;
+           instructionReference;
+           offset;
+         }
+      )
+      (obj10
+         (opt "id" int64)
+         (req "verified" bool)
+         (opt "message" string)
+         (opt "source" @@ Source.enc json)
+         (opt "line" int64)
+         (opt "column" int64)
+         (opt "endLine" int64)
+         (opt "endColumn" int64)
+         (opt "instructionReference" string)
+         (opt "offset" int64)
+      )
+
 end
 
 
@@ -287,6 +351,16 @@ module Module_ = struct
   type id =
     | I of int
     | S of string
+
+  let enc_id =
+    let open Data_encoding in
+    conv
+      (function | I i -> string_of_int i | S s -> s)
+      (fun id ->
+         match int_of_string_opt id with
+         | Some i -> I i
+         | None -> S id)
+      string
 
   type t = {
     id: id;
@@ -300,6 +374,72 @@ module Module_ = struct
     dateTimeStamp: string option;
     addressRange: string option;
   }
+
+
+  let enc =
+    let open Data_encoding in
+    conv
+      (fun {
+         id;
+         name;
+         path;
+         isOptimized;
+         isUserCode;
+         version;
+         symbolStatus;
+         symbolFilePath;
+         dateTimeStamp;
+         addressRange;
+       } -> (
+           id,
+           name,
+           path,
+           isOptimized,
+           isUserCode,
+           version,
+           symbolStatus,
+           symbolFilePath,
+           dateTimeStamp,
+           addressRange
+         )
+      )
+      (fun (
+         id,
+         name,
+         path,
+         isOptimized,
+         isUserCode,
+         version,
+         symbolStatus,
+         symbolFilePath,
+         dateTimeStamp,
+         addressRange
+       ) -> {
+           id;
+           name;
+           path;
+           isOptimized;
+           isUserCode;
+           version;
+           symbolStatus;
+           symbolFilePath;
+           dateTimeStamp;
+           addressRange;
+         }
+      )
+      (obj10
+         (req "id" enc_id)
+         (req "name" string)
+         (opt "path" string)
+         (opt "isOptimized" bool)
+         (opt "isUserCode" bool)
+         (opt "version" string)
+         (opt "symbolStatus" string)
+         (opt "symbolFilePath" string)
+         (opt "dateTimeStamp" string)
+         (opt "addressRange" string)
+      )
+
 
 end
 
