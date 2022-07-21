@@ -3,6 +3,8 @@ open Json_schema
 module Q = Json_query
 
 
+module StrHashtbl = Hashtbl.Make(struct type t = string let equal = String.equal let hash = Hashtbl.hash end)
+(* string list StrHashtbl.t = StrHashtbl.create 100 in *)
 (* extract all $ref *)
 let _process ~name full_schema element =
 
@@ -12,10 +14,6 @@ let _process ~name full_schema element =
 
   let rec process_element el =
     process_kind el.kind
-
-  and process_property _name element _required _extra =
-    Printf.printf "process property '%s'\n" _name;
-    process_element element
 
   and process_kind = function
     | Object {properties; pattern_properties; additional_properties; min_properties; max_properties; schema_dependencies; property_dependencies} -> (
@@ -60,11 +58,17 @@ let _process ~name full_schema element =
     | Any -> () (* failwith "TODO Any" *)
     | Dummy -> () (* failwith "TODO Dummy" *)
 
+  and process_property _name element _required _extra =
+    Printf.printf "process property '%s'\n" _name;
+    process_element element
+
   in
   process_element element;
   (name, !pths)
 
 let process ~name full_schema =
+  (* first check is valid name *)
+  let _ = Q.path_of_json_pointer name in
   let el = find_definition name full_schema in
   _process ~name full_schema el
 
