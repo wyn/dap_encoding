@@ -6,71 +6,85 @@ module Q = Json_query
 module StrHashtbl = Hashtbl.Make(struct type t = string let equal = String.equal let hash = Hashtbl.hash end)
 (* string list StrHashtbl.t = StrHashtbl.create 100 in *)
 (* extract all $ref *)
-let _process ~name full_schema element =
+let pths = ref []
+let _spaces = ref 0
 
-  Printf.printf "\nprocess start: '%s'\n" name;
+let space n =
+  List.init n (fun _ -> "") |> String.concat " "
 
-  let pths = ref [] in
+let rec process_name ~schema name =
+  Printf.printf "%sprocess name start: '%s'\n" (space !_spaces) name;
+  _spaces := !_spaces + 4;
 
-  let rec process_element el =
-    process_kind el.kind
-
-  and process_kind = function
-    | Object {properties; pattern_properties; additional_properties; min_properties; max_properties; schema_dependencies; property_dependencies} -> (
-        assert (0 = List.length pattern_properties);
-        assert (0 = List.length schema_dependencies);
-        assert (0 = List.length property_dependencies);
-        assert (0 = min_properties);
-        assert (Option.is_none max_properties);
-        assert (Option.is_some additional_properties);
-        properties |> List.iter (fun (name, ty, required, extra) -> process_property name ty required extra)
-      )
-    | Array (_, _) -> () (* failwith "TODO array" *)
-    | Monomorphic_array (element, {min_items; max_items; unique_items; additional_items}) -> (
-        assert (0 = min_items);
-        assert (Option.is_none max_items);
-        assert (not unique_items);
-        assert (Option.is_none additional_items);
-        process_element element
-      )
-    | Combine (c, elements) -> (
-        match c with
-        | All_of -> elements |> List.iter (fun el -> process_element el)
-        | Any_of | One_of | Not -> () (* failwith "TODO other combinators" *)
-      )
-    | Def_ref path ->
-      let path_str = Q.json_pointer_of_path path in
-      if List.mem path_str !pths then
-        Printf.printf "found old $ref '%s', ignoring\n" path_str
-      else
-        let element = find_definition path_str full_schema in
-        pths := path_str :: !pths;
-        Printf.printf "found new $ref '%s'\n" path_str;
-        process_element element
-
-    | Id_ref _ -> () (* failwith "TODO Id_ref" *)
-    | Ext_ref _ -> () (* failwith "TODO Ext_ref" *)
-    | String _ -> () (* failwith "TODO String" *)
-    | Integer _ -> () (* failwith "TODO Integer" *)
-    | Number _ -> () (* failwith "TODO Number" *)
-    | Boolean -> () (* failwith "TODO Boolean" *)
-    | Null -> () (* failwith "TODO Null" *)
-    | Any -> () (* failwith "TODO Any" *)
-    | Dummy -> () (* failwith "TODO Dummy" *)
-
-  and process_property _name element _required _extra =
-    Printf.printf "process property '%s'\n" _name;
-    process_element element
-
-  in
-  process_element element;
-  (name, !pths)
-
-let process ~name full_schema =
   (* first check is valid name *)
   let _ = Q.path_of_json_pointer name in
-  let el = find_definition name full_schema in
-  _process ~name full_schema el
+  let element = find_definition name schema in
+  process_element ~schema element;
+
+  _spaces := !_spaces - 4;
+  Printf.printf "%sprocess name end: '%s'\n" (space !_spaces) name;
+
+and process_element ~schema el =
+  Printf.printf "%sprocess element\n" (space !_spaces) ;
+  process_kind ~schema el.kind
+
+and process_kind ~schema = function
+  | Object {properties; pattern_properties; additional_properties; min_properties; max_properties; schema_dependencies; property_dependencies} -> (
+      assert (0 = List.length pattern_properties);
+      assert (0 = List.length schema_dependencies);
+      assert (0 = List.length property_dependencies);
+      assert (0 = min_properties);
+      assert (Option.is_none max_properties);
+      assert (Option.is_some additional_properties);
+      Printf.printf "%sprocess object with %d properties\n" (space !_spaces) @@ List.length properties;
+      properties |> List.iter (fun (name, ty, required, extra) -> process_property ~schema name ty required extra)
+    )
+  | Array (_, _) -> () (* failwith "TODO array" *)
+  | Monomorphic_array (element, {min_items; max_items; unique_items; additional_items}) -> (
+      assert (0 = min_items);
+      assert (Option.is_none max_items);
+      assert (not unique_items);
+      assert (Option.is_none additional_items);
+      Printf.printf "%sprocess mono-morphic array\n" (space !_spaces) ;
+      process_element ~schema element
+    )
+  | Combine (c, elements) -> (
+      match c with
+      | All_of -> (
+        Printf.printf "%sprocess combination with %d elements\n" (space !_spaces) @@ List.length elements;
+        elements |> List.iter (fun el -> process_element ~schema el)
+      )
+      | Any_of | One_of | Not -> () (* failwith "TODO other combinators" *)
+    )
+  | Def_ref path ->
+    let path_str = Q.json_pointer_of_path path in
+    if List.mem path_str !pths then
+      Printf.printf "%sfound old $ref '%s', ignoring\n" (space !_spaces) path_str
+    else (
+      pths := path_str :: !pths;
+      Printf.printf "%sfound new $ref '%s'\n" (space !_spaces) path_str;
+      process_name ~schema path_str
+    )
+  | Id_ref _ -> () (* failwith "TODO Id_ref" *)
+  | Ext_ref _ -> () (* failwith "TODO Ext_ref" *)
+  | String _ -> () (* failwith "TODO String" *)
+  | Integer _ -> () (* failwith "TODO Integer" *)
+  | Number _ -> () (* failwith "TODO Number" *)
+  | Boolean -> () (* failwith "TODO Boolean" *)
+  | Null -> () (* failwith "TODO Null" *)
+  | Any -> () (* failwith "TODO Any" *)
+  | Dummy -> () (* failwith "TODO Dummy" *)
+
+and process_property ~schema _name element _required _extra =
+  Printf.printf "%sprocess property '%s'\n" (space !_spaces) _name;
+  process_element ~schema element
+
+
+let process ~schema name =
+  Printf.printf "\n\nprocessing '%s'\n" name;
+  pths := [];
+  process_name ~schema name;
+  (name, !pths)
 
 
 
