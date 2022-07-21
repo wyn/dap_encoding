@@ -4,9 +4,9 @@ module Q = Json_query
 
 
 module StrHashtbl = Hashtbl.Make(struct type t = string let equal = String.equal let hash = Hashtbl.hash end)
-(* string list StrHashtbl.t = StrHashtbl.create 100 in *)
+let tbl : string list StrHashtbl.t = StrHashtbl.create 100
+
 (* extract all $ref *)
-let pths = ref []
 let _spaces = ref 0
 
 let space n =
@@ -19,16 +19,17 @@ let rec process_name ~schema name =
   (* first check is valid name *)
   let _ = Q.path_of_json_pointer name in
   let element = find_definition name schema in
-  process_element ~schema element;
+  StrHashtbl.add tbl name [];
+  process_element ~schema ~name element;
 
   _spaces := !_spaces - 4;
   Printf.printf "%sprocess name end: '%s'\n" (space !_spaces) name;
 
-and process_element ~schema el =
-  Printf.printf "%sprocess element\n" (space !_spaces) ;
-  process_kind ~schema el.kind
+and process_element ~schema ~name el =
+  Printf.printf "%sprocess element under '%s'\n" (space !_spaces) name;
+  process_kind ~schema ~name el.kind
 
-and process_kind ~schema = function
+and process_kind ~schema ~name = function
   | Object {properties; pattern_properties; additional_properties; min_properties; max_properties; schema_dependencies; property_dependencies} -> (
       assert (0 = List.length pattern_properties);
       assert (0 = List.length schema_dependencies);
@@ -36,8 +37,8 @@ and process_kind ~schema = function
       assert (0 = min_properties);
       assert (Option.is_none max_properties);
       assert (Option.is_some additional_properties);
-      Printf.printf "%sprocess object with %d properties\n" (space !_spaces) @@ List.length properties;
-      properties |> List.iter (fun (name, ty, required, extra) -> process_property ~schema name ty required extra)
+      Printf.printf "%sprocess object with %d properties under '%s'\n" (space !_spaces) (List.length properties) name;
+      properties |> List.iter (fun (pname, ty, required, extra) -> process_property ~schema ~name pname ty required extra)
     )
   | Array (_, _) -> () (* failwith "TODO array" *)
   | Monomorphic_array (element, {min_items; max_items; unique_items; additional_items}) -> (
@@ -45,24 +46,25 @@ and process_kind ~schema = function
       assert (Option.is_none max_items);
       assert (not unique_items);
       assert (Option.is_none additional_items);
-      Printf.printf "%sprocess mono-morphic array\n" (space !_spaces) ;
-      process_element ~schema element
+      Printf.printf "%sprocess mono-morphic array under '%s'\n" (space !_spaces) name;
+      process_element ~schema ~name element
     )
   | Combine (c, elements) -> (
       match c with
       | All_of -> (
-        Printf.printf "%sprocess combination with %d elements\n" (space !_spaces) @@ List.length elements;
-        elements |> List.iter (fun el -> process_element ~schema el)
+        Printf.printf "%sprocess combination with %d elements under '%s'\n" (space !_spaces) (List.length elements) name;
+        elements |> List.iter (fun el -> process_element ~schema ~name el)
       )
       | Any_of | One_of | Not -> () (* failwith "TODO other combinators" *)
     )
   | Def_ref path ->
     let path_str = Q.json_pointer_of_path path in
-    if List.mem path_str !pths then
-      Printf.printf "%sfound old $ref '%s', ignoring\n" (space !_spaces) path_str
+    if StrHashtbl.mem tbl path_str then
+      Printf.printf "%sfound old $ref '%s' under '%s', ignoring\n" (space !_spaces) path_str name
     else (
-      pths := path_str :: !pths;
-      Printf.printf "%sfound new $ref '%s'\n" (space !_spaces) path_str;
+      let ps = StrHashtbl.find_opt tbl name |> Option.value ~default:[] in
+      StrHashtbl.replace tbl name (path_str :: ps);
+      Printf.printf "%sfound new $ref '%s' under '%s'\n" (space !_spaces) path_str name;
       process_name ~schema path_str
     )
   | Id_ref _ -> () (* failwith "TODO Id_ref" *)
@@ -75,16 +77,17 @@ and process_kind ~schema = function
   | Any -> () (* failwith "TODO Any" *)
   | Dummy -> () (* failwith "TODO Dummy" *)
 
-and process_property ~schema _name element _required _extra =
-  Printf.printf "%sprocess property '%s'\n" (space !_spaces) _name;
-  process_element ~schema element
+and process_property ~schema ~name pname element _required _extra =
+  Printf.printf "%sprocess property '%s' under '%s'\n" (space !_spaces) pname name;
+  process_element ~schema ~name element
 
 
 let process ~schema name =
   Printf.printf "\n\nprocessing '%s'\n" name;
-  pths := [];
   process_name ~schema name;
-  (name, !pths)
+  let ls = StrHashtbl.to_seq tbl |> List.of_seq in
+  let ret = (name, ls) in
+  ret
 
 
 
