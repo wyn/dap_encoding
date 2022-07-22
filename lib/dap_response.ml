@@ -35,7 +35,7 @@ module Response = struct
     method request_seq = request_seq
     method success = success
     method command = command
-    method message = Some (message |> Option.value ~default:Cancelled)
+    method message = message
     method body = body
 
   end
@@ -56,7 +56,7 @@ module Response = struct
          (req "success" bool)
          (req "command" string)
          (opt "message" enc_t)
-         (opt "body" js)
+         (req "body" js)
       )
 
 end
@@ -89,10 +89,11 @@ module ErrorResponse = struct
 
 end
 
+module type EMPTY_BODY = sig type t val body : t val enc : t Data_encoding.t  end
 
-module CancelResponse = struct
+module MakeEmptyBodyResponse (B:EMPTY_BODY) = struct
 
-  type body = unit option (* body is optional in Response *)
+  type body = B.t
 
   type cls_t = body Response.cls_t
 
@@ -101,9 +102,15 @@ module CancelResponse = struct
       (request_seq:int64)
       (success:bool)
       (command:string) = object
-    inherit [body] Response.cls seq request_seq success command None None
+    inherit [body] Response.cls seq request_seq success command None B.body
   end
 
-  let enc = Response.enc Data_encoding.unit (* need encoder for what optional body carries *)
+  let enc = Response.enc B.enc
 
 end
+
+module UnitBody = struct type t = unit let body = () let enc = Data_encoding.unit end
+
+module CancelResponse = MakeEmptyBodyResponse(UnitBody)
+
+module NextResponse = MakeEmptyBodyResponse(UnitBody)

@@ -31,24 +31,6 @@ module type ENC_1 = sig
   val enc : 'a Data_encoding.t -> 'a t Data_encoding.t
 end
 
-module CancelArguments = struct
-
-  type t = {
-    requestId:int64 option;
-    progressId:string option
-  }
-
-  let enc =
-    let open Data_encoding in
-    conv
-      (fun {requestId; progressId} -> (requestId, progressId))
-      (fun (requestId, progressId) -> {requestId; progressId})
-      (obj2
-         (opt "requestId" int64)
-         (opt "progressId" string))
-
-end
-
 
 module Message = struct
 
@@ -1000,4 +982,20 @@ module InvalidatedAreas = struct
         | _ -> failwith "Unknown invalidated areas"
       )
       string
+end
+
+module SteppingGranularity = struct
+
+  type t =
+    | Statement
+    | Line
+    | Instruction
+
+  let enc =
+    let open Data_encoding in
+    conv
+      (function | Statement -> "statement" | Line -> "line" | Instruction -> "instruction")
+      (function | "statement" -> Statement | "line" -> Line | "instruction" -> Instruction | _ -> failwith "Unknown stepping granularity")
+      string
+
 end
